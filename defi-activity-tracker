@@ -1,0 +1,29 @@
+defi-activity-tracker/
+├── chainhooks/
+│   └── chainhook.yaml
+│
+├── backend/
+│   ├── package.json
+│   ├── index.js
+│   ├── db.js
+│   ├── schema.sql
+│   └── .env.example
+│
+├── frontend/
+│   ├── package.json
+│   ├── next.config.js
+│   ├── vercel.json
+│   ├── app/
+│   │   ├── layout.jsx
+│   │   ├── page.jsx
+│   │   └── wallet/
+│   │       └── [address]/
+│   │           └── page.jsx
+│   ├── components/
+│   │   ├── StatCard.jsx
+│   │   ├── EventsTable.jsx
+│   │   └── TvlChart.jsx
+│   └── lib/
+│       └── api.js
+│
+└── README.md
