@@ -1,0 +1,41 @@
+chainhooks:
+  - name: defi-deposit
+    version: 1
+    networks:
+      stacks:
+        mainnet:
+          start_block: 0
+          predicate:
+            type: contract-call
+            contract_identifier: SPXXXX.defi-vault
+            method: deposit
+          action:
+            type: webhook
+            url: https://YOUR_BACKEND_URL/webhook/deposit
+
+  - name: defi-withdraw
+    version: 1
+    networks:
+      stacks:
+        mainnet:
+          start_block: 0
+          predicate:
+            type: contract-call
+            contract_identifier: SPXXXX.defi-vault
+            method: withdraw
+          action:
+            type: webhook
+            url: https://YOUR_BACKEND_URL/webhook/withdraw
+
+  - name: defi-token
+    version: 1
+    networks:
+      stacks:
+        mainnet:
+          start_block: 0
+          predicate:
+            type: ft-event
+            asset_identifier: SPXXXX.token::defi-token
+          action:
+            type: webhook
+            url: https://YOUR_BACKEND_URL/webhook/token
