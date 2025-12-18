@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { fetchStats, fetchTvlHistory } from '../lib/api';
 import StatCard from '../components/StatCard';
 import EventsTable from '../components/EventsTable';
