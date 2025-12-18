@@ -3,6 +3,7 @@ const bodyParser = require('body-parser');
 const pool = require('./db');
 const rateLimit = require('express-rate-limit');
 const WebSocket = require('ws');
+const { ChainhooksClient } = require('@hirosystems/chainhooks-client');
 
 const app = express();
 app.use(bodyParser.json());
@@ -23,7 +24,7 @@ function broadcast(data) {
   wss.clients.forEach(c => c.readyState === 1 && c.send(JSON.stringify(data)));
 }
 
-/* 🔔 WEBHOOK */
+/* 🔔 INSERT EVENT */
 async function insertEvent(type, payload) {
   const tx = payload.apply[0];
 
@@ -48,10 +49,27 @@ async function insertEvent(type, payload) {
   broadcast(event);
 }
 
+/* 🌐 MANUAL WEBHOOK */
 app.post('/webhook/:type', async (req, res) => {
   await insertEvent(req.params.type, req.body);
   res.sendStatus(200);
 });
+
+/* 🔗 HIRO CHAINHOOKS */
+const chainhooks = new ChainhooksClient({
+  url: process.env.CHAINHOOKS_URL,
+  apiKey: process.env.CHAINHOOKS_API_KEY
+});
+
+chainhooks.on('event', async (payload) => {
+  try {
+    await insertEvent('token_transfer', payload);
+  } catch (err) {
+    console.error('Chainhooks insert error:', err);
+  }
+});
+
+chainhooks.connect().then(() => console.log('Connected to Hiro Chainhooks'));
 
 /* 📊 STATS */
 app.get('/api/stats', async (_, res) => {
