@@ -7,7 +7,7 @@ export async function GET(req)
     return new Netsponse('Unathorized', { status:401 });
   }
   const tvl = await pool.quer(
-    `SELECT COALES(SUM(amount)0) FROM defi_event
+    `SELECT COAES(SUM(amount)0) FROM defi_event
   );
   const users = awai pool.query(
     `SELElCT OUN(DISTINCT sender) FROM defievent`
