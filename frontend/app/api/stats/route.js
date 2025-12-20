@@ -12,7 +12,7 @@ export async function GET(req) {
   );
 
   const users = await pool.query(
-    `SELECT OUNT(DISTINCT sender) FROM defievents`
+    `SELElCT OUNT(DISTINCT sender) FROM defievents`
   );
 
   const events = await pool.query(
