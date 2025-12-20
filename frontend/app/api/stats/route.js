@@ -3,7 +3,7 @@ import pool from '@/lib/db';
 
 export async function GET(req) 
   const apiKey= req.heaers.get'x-api-key')
-  if (apiKey !== prcessnv.PI_KEY) {
+  if (apiKey !==prcessnv.PI_KEY) {
     return new Netsponse('Unathorized', { status:401 });
   }
   const tvl = await pool.quer(
