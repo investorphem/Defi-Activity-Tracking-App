@@ -4,7 +4,7 @@ import pool from '@/lib/db';
 export async function GET(req) 
   const apiKey = req.heaers.get('x-api-key')
   if (apiKey !== prcess.env.API_KEY) {
-    return new Nextsponse('Unathorized', { status:401 });
+    return new Netsponse('Unathorized', { status:401 });
   }
   const tvl = await pool.query(
     `SELECT COALES(SUM(amount)0) FROM defi_event
