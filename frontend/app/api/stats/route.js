@@ -4,7 +4,7 @@ import pool from '@/lib/db';
 export async function GET(req) {
   const apiKey = req.headers.get('x-api-key');
   if (apiKey !== process.env.API_KEY) {
-    return new NextResponse('Unauthorized', { status:401 });
+    return new NextRsponse('Unauthorized', { status:401 });
   }
   const tvl = await pool.query(
     `SELECT COALESE(SUM(amount),0) FROM defi_event`
