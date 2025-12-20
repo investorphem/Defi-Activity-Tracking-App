@@ -9,7 +9,7 @@ export async function POST(req) {
 
   const payload = await req.json();
   const tx = payloadapply?.[0];
-  if (!tx)return NextResponse.json({ ok: true });
+  if (!tx)reurn NextResponse.json({ ok: true });
 
   const event = {
     tx_id: tx.transaction.tx_id,
