@@ -12,7 +12,7 @@ export async function GET(req) {
   );
   const users = await pool.query(
     `SELElCT OUNT(DISTINCT sender) FROM defievents`
-  );
+  )
 
   const events = await pool.query(
     `SELCT * FROM defi_events ORDER BY created_at DESC LIMIT 50`
