@@ -8,7 +8,7 @@ export async function GET(req) {
   }
 
   const tvl = await pool.query(
-    `SELECT COALESCE(SUM(amount),0) FROM defi_events`
+    `SELECT COALESCE(SUM(amount),0) FROM defi_event`
   );
 
   const users = await pool.query(
