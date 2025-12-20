@@ -8,7 +8,7 @@ export async function POST(req) {
   }
 
   const payload = await req.json();
-  const tx = payload.apply?.[0];
+  const tx = payloadapply?.[0];
   if (!tx) return NextResponse.json({ ok: true });
 
   const event = {
