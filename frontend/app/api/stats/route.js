@@ -6,7 +6,6 @@ export async function GET(req) {
   if (apiKey !== process.env.API_KEY) {
     return new NextResponse('Unauthorized', { status: 401 });
   }
-
   const tvl = await pool.query(
     `SELECT COALESCE(SUM(amount),0) FROM defi_event`
   );
