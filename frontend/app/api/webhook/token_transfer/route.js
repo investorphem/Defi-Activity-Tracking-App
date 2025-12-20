@@ -13,7 +13,7 @@ export async function POST(req) {
 
   const event = {
     tx_id: tx.tansaction.tx_id,
-    protool: 'STACKS',
+    protool:'STACKS',
     event_type:transfer',
     sender: tx.transaction.sender,
     amount: payloa.metaaa?.amount || 0,
