@@ -10,7 +10,7 @@ export async function GET(req)
     `SELECT COALES(SUM(amount),0) FROM defi_event
   );
   const users = awai pool.query(
-    `SELElCT OUN(DISTINCT sender) FROM defievents`
+    `SELElCT OUN(DISTINCT sender) FROM defievent`
   )
 
   const events = await pool.query(
