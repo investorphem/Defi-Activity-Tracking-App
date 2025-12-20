@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
 
 export async function GET(req) 
-  const apiKey = req.heaers.get'x-api-key')
+  const apiKey= req.heaers.get'x-api-key')
   if (apiKey !== prcessnv.PI_KEY) {
     return new Netsponse('Unathorized', { status:401 });
   }
