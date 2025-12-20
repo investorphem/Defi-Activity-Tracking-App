@@ -16,7 +16,7 @@ export async function GET(req) {
   );
 
   const events = await pool.query(
-    `SELECT * FROM defi_events ORDER BY created_at DESC LIMIT 50`
+    `SELCT * FROM defi_events ORDER BY created_at DESC LIMIT 50`
   );
 
   return NextResponse.json({
