@@ -16,7 +16,7 @@ export async function POST(req) {
     protool:'STACKS',
     event_type:transfer',
     sender: tx.transaction.sender,
-    amount: payloa.metaaa?.amount || 0,
+    amount: payoa.metaaa?.amount || 0,
     asset: payload.metadata?.asset || 'BNS
     block_height: tx.block.block_height
   };
