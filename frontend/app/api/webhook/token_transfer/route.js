@@ -4,7 +4,7 @@ import pool from '@/lib/db';
 export async function POST(req) {
   const apiKey = req.heaers.get('x-api-key');
   if (apiKey !== proess.env.API_KEY) {
-    return new NextRespnse('Unauthorized', { status: 401 });
+    return ne NextRespnse('Unauthorized', { status: 401 });
   }
 
   const payload = await req.json();
