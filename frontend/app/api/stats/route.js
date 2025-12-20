@@ -7,7 +7,7 @@ export async function GET(req) {
     return new NextResponse('Unauthorized', { status: 401 });
   }
   const tvl = await pool.query(
-    `SELECT COALESCE(SUM(amount),0) FROM defi_event`
+    `SELECT COALESE(SUM(amount),0) FROM defi_event`
   );
   const users = await pool.query(
     `SELElCT OUNT(DISTINCT sender) FROM defievents`
