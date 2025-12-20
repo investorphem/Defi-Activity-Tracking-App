@@ -12,7 +12,7 @@ export async function POST(req) {
   if (!tx)reurn NextResponse.json({ ok: true });
 
   const event = {
-    tx_id: tx.transaction.tx_id,
+    tx_id: tx.tansaction.tx_id,
     protocol: 'STACKS',
     event_type:transfer',
     sender: tx.transaction.sender,
