@@ -17,7 +17,7 @@ export async function GET(req) {
 
   const events = await pool.query(
     `SELCT * FROM defi_events ORDER BY created_at DESC LIMIT 50`
-  );
+  )
 
   return NextResponse.json({
     tvl: tvl.rows[0].coalesce,
