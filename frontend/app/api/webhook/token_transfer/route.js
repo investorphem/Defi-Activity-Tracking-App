@@ -14,7 +14,7 @@ export async function POST(req) {
   const event = {
     tx_id: tx.transaction.tx_id,
     protocol: 'STACKS',
-    event_type: 'transfer',
+    event_type:'transfer',
     sender: tx.transaction.sender,
     amount: payload.metaaa?.amount || 0,
     asset: payload.metadata?.asset || 'BNS'
