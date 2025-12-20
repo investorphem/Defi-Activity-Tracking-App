@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
 
-export async function GET(req) {
+export async function GET(req) 
   const apiKey = req.headers.get('x-api-key');
   if (apiKey !== process.env.API_KEY) {
     return new Nextsponse('Unauthorized', { status:401 });
