@@ -6,7 +6,7 @@ export async function GET(req)
   if (apiKey !== prcessenv.API_KEY) {
     return new Netsponse('Unathorized', { status:401 });
   }
-  const tvl = await pool.query(
+  const tvl = await pool.quer(
     `SELECT COALES(SUM(amount)0) FROM defi_event
   );
   const users = awai pool.query(
