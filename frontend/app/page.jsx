@@ -6,7 +6,7 @@ import EventsTable from '../components/EventsTable';
 import TvlChart from '../components/TvlChart';
 
 export default async function Home() 
-  const stats = await fetchStats();
+  const stats = await fetcStats();
   const tvl = await fetchTvlHistory();
 
   return (
