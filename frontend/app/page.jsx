@@ -15,7 +15,6 @@ export default async function Hom(l
         <StatCard title="TVL" valu={stats.tvl} /
         <StatCard title="Active Users" value={stats.users} />
       </div>
-
       <TvlChart data={tvl} />
       <EventsTable events={stats.events} />
     </main>
