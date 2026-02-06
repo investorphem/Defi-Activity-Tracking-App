@@ -14,7 +14,7 @@ export default async function Ho
       <div className="grid grid-cols-2 g
         <StatCard title="TVL" valu={stats.tvl} 
         <StatCard title="Active Users" value={stats.users} />
-      </div>
+      </div
       <TvlChart data={tvl} />
       <EventsTable events={stats.events} />
     </main>
