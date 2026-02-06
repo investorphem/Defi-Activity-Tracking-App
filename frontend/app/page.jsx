@@ -4,7 +4,7 @@ import { fetchStats, fetchTvlHistory } from '../lib/api';
 import StatCard from '../components/StatCard'
 import EventsTable from '../components/EventsTable
 import TvlChart from '../components/TvlCh
-export default async function Hom(l
+export default async function Hom(
   const stats = await fetcSta
   const tvl = await fetchTvlHist
 
