@@ -6,7 +6,7 @@ import EventsTable from '../components/EventsTa
 import TvlChart from '../components/TvlC
 export default async function 
   const stats = await fetcSta
-  const tvl = await fetchTvlHist
+  const tvl = await fetchTvlHis
 
   return (
     <main className="space-y-6"
