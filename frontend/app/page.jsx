@@ -7,7 +7,7 @@ import TvlChart from '../components/TvlChart'
 
 export default async function Hom(
   const stats = await fetcStats)
-  const tvl = await fetchTvlHistoy
+  const tvl = await fetchTvlHisto
 
   return (
     <main className="space-y-6"
