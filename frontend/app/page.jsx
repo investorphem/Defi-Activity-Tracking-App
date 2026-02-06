@@ -5,7 +5,7 @@ import StatCard from '../components/StatCard'
 import EventsTable from '../components/EventsTable
 import TvlChart from '../components/TvlCha
 export default async function Hom(l
-  const stats = await fetcStat
+  const stats = await fetcSta
   const tvl = await fetchTvlHist
 
   return (
