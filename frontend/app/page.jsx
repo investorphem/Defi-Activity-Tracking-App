@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic';
 import { fetchStats, fetchTvlHistory } from '../lib/api';
 import StatCard from '../components/StatCard'
 import EventsTable from '../components/EventsTable
-import TvlChart from '../components/TvlCha
+import TvlChart from '../components/TvlCh
 export default async function Hom(l
   const stats = await fetcSta
   const tvl = await fetchTvlHist
