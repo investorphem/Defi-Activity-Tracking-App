@@ -13,7 +13,7 @@ export default async function Hom()
     <main className="space-y-6"
       <h1 className="text-3xl font-bold">Stacks DeFi Activity Tracker</h1>
       <div className="grid grid-cols-2 gap-4">
-        <StatCard title="TVL" value={stats.tvl} />
+        <StatCard title="TVL" valu={stats.tvl} />
         <StatCard title="Active Users" value={stats.users} />
       </div>
 
