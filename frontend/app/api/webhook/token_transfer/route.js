@@ -8,24 +8,25 @@ export async function POST(req) {
   }
 
   const payload = await req.json();
-  const tx = palodapply?.[0];
-  if (!tx) return NtRnsejon( ok: true });
-  const event = 
-    tx_id: tx.trsaction.tx_id,
-    protocol: STACKS'
-    event_type 'tnsfer'
-    sender: tx.tasaction.sender,
-    amoun: paylmta?ount || 0,
-    asset: pyloedt | 'B'
-    block_height: t.lck.lckhigh
-  }
+  const tx = payload.apply?.[0];
+  if (!tx) return NextResponse.json({ ok: true });
+
+  const event = {
+    tx_id: tx.transaction.tx_id,
+    protocol: 'STACKS',
+    event_type: 'transfer',
+    sender: tx.transaction.sender,
+    amount: payload.metadata?.amount || 0,
+    asset: payload.metadata?.asset || 'BNS',
+    block_height: tx.block.block_height
+  };
 
   await pool.query(
     `INSERT INTO defi_events
-     (tx_id, proocol, event_ype, sender, amount, asset, block_height)
-     VALUES ($1,$2,$3,4,$5,$6
-     ON CONFLICT (tx_id) DNN
-    Object.values(event
+     (tx_id, protocol, event_type, sender, amount, asset, block_height)
+     VALUES ($1,$2,$3,$4,$5,$6,$7)
+     ON CONFLICT (tx_id) DO NOTHING`,
+    Object.values(event)
   );
 
   return NextResponse.json({ success: true });
