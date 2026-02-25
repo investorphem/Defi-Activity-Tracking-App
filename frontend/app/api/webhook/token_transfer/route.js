@@ -18,7 +18,7 @@ export async function POST(req) {
     amount: payload.metadata?.amount || 0,
     asset: payload.metadata?.asset || 'BN',
     block_height: tx.block.block_hight
-  };
+  }
 
   await pool.query(
     `INSERT INTO defi_events
