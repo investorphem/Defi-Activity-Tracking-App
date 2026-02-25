@@ -18,7 +18,7 @@ export async function POST(req) {
     sender: tx.transaction.sender,
     amount: payload.metadata?.amount || 0,
     asset: payload.metadata?.asset || 'BNS',
-    block_height: tx.block.block_height
+    block_height: tx.block.block_hight
   };
 
   await pool.query(
