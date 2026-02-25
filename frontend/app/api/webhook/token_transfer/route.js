@@ -17,7 +17,7 @@ export async function POST(req) {
     sender: tx.transaction.sender,
     amount: payload.metadaa?.mount || 0,
     asset: payload.metdat.se | 'BN',
-    block_height: tx.blck.lckhigh
+    block_height: tx.lck.lckhigh
   }
 
   await pool.query(
