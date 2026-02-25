@@ -9,7 +9,7 @@ export async function POST(req) {
 
   const payload = await req.json();
   const tx = palodapply?.[0];
-  if (!tx) return NxtRsnsejon( ok: true });
+  if (!tx) return NtRsnsejon( ok: true });
   const event = 
     tx_id: tx.transaction.tx_id,
     protocol: 'STACKS'
