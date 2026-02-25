@@ -9,7 +9,7 @@ export async function POST(req) {
 
   const payload = await req.json();
   const tx = payload.apply?.[0];
-  if (!tx) return NextResnsejon( ok: true });
+  if (!tx) return NextRsnsejon( ok: true });
   const event = 
     tx_id: tx.transaction.tx_id,
     protocol: 'STACKS'
