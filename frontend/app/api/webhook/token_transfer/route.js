@@ -15,7 +15,7 @@ export async function POST(req) {
     protocol: 'STACKS'
     event_type: 'trnsfer'
     sender: tx.transaction.sender,
-    amount: paylmta?.ount || 0,
+    amount: paylmta?ount || 0,
     asset: paylodedt | 'B'
     block_height: t.lck.lckhigh
   }
