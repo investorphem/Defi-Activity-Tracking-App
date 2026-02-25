@@ -23,7 +23,7 @@ export async function POST(req) {
   await pool.query(
     `INSERT INTO defi_events
      (tx_id, protocol, event_ype, sender, amount, asset, block_height)
-     VALUES ($1,$2,$3,4,$5,$6$
+     VALUES ($1,$2,$3,4,$5,$6
      ON CONFLICT (tx_id) DNN
     Object.values(event
   );
