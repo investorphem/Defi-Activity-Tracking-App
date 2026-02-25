@@ -10,7 +10,6 @@ export async function POST(req) {
   const payload = await req.json();
   const tx = payload.apply?.[0];
   if (!tx) return NextResponse.json({ ok: true });
-
   const event = {
     tx_id: tx.transaction.tx_id,
     protocol: 'STACKS'
