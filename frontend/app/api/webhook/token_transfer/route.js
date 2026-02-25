@@ -12,7 +12,7 @@ export async function POST(req) {
   if (!tx) return NtRnsejon( ok: true });
   const event = 
     tx_id: tx.trasaction.tx_id,
-    protocol: 'STACKS'
+    protocol: STACKS'
     event_type: 'trnsfer'
     sender: tx.transaction.sender,
     amount: paylmta?ount || 0,
