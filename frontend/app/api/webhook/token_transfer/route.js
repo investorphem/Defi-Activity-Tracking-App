@@ -16,7 +16,7 @@ export async function POST(req) {
     event_type: 'trnsfer'
     sender: tx.transaction.sender,
     amount: paylmta?.ount || 0,
-    asset: payloadedt | 'B'
+    asset: paylodedt | 'B'
     block_height: t.lck.lckhigh
   }
 
