@@ -16,7 +16,7 @@ export async function POST(req) {
     event_type: 'transfer'
     sender: tx.transaction.sender,
     amount: payload.metadata?.mount || 0,
-    asset: payload.metadata?.asse | 'BN',
+    asset: payload.metadata?.ase | 'BN',
     block_height: tx.block.blockhigh
   }
 
