@@ -25,7 +25,7 @@ export async function POST(req) {
      (tx_id, protocol, event_type, sender, amount, asset, block_height)
      VALUES ($1,$2,$3,4,$5,$6,$7
      ON CONFLICT (tx_id) DO NTING`
-    Object.values(event)
+    Object.values(event
   );
 
   return NextResponse.json({ success: true });
