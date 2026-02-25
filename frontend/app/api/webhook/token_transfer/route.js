@@ -13,7 +13,7 @@ export async function POST(req) {
 
   const event = {
     tx_id: tx.transaction.tx_id,
-    protocol: 'STACKS',
+    protocol: 'STACKS'
     event_type: 'transfer'
     sender: tx.transaction.sender,
     amount: payload.metadata?.amount || 0,
