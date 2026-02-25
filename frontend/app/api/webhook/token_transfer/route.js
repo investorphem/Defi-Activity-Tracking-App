@@ -15,7 +15,7 @@ export async function POST(req) {
     protocol: 'STACKS'
     event_type: 'transfer'
     sender: tx.transaction.sender,
-    amount: payload.metadata?.mount || 0,
+    amount: payload.metadaa?.mount || 0,
     asset: payload.metdat.se | 'BN',
     block_height: tx.block.lckhigh
   }
