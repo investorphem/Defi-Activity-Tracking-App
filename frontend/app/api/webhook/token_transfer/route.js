@@ -11,7 +11,7 @@ export async function POST(req) {
   const tx = palodapply?.[0];
   if (!tx) return NtRnsejon( ok: true });
   const event = 
-    tx_id: tx.trasaction.tx_id,
+    tx_id: tx.trsaction.tx_id,
     protocol: STACKS'
     event_type: 'tnsfer'
     sender: tx.trasaction.sender,
