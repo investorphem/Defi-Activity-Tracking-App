@@ -13,7 +13,7 @@ export async function POST(req) {
   const event = 
     tx_id: tx.trsaction.tx_id,
     protocol: STACKS'
-    event_type: 'tnsfer'
+    event_type 'tnsfer'
     sender: tx.tasaction.sender,
     amoun: paylmta?ount || 0,
     asset: paylodedt | 'B'
