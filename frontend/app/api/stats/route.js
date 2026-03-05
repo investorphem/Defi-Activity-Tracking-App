@@ -1,27 +1,24 @@
-import { NextResponse } from 'next/server';
-import pool from '@/lib/db';
+import { NextResponse } from "next/server";
 
 export async function GET(req) {
-  const apiKey = req.headers.get('x-api-key');
+  const apiKey = req.headers.get("x-api-key");
+
   if (apiKey !== process.env.API_KEY) {
-    return new NextResponse('Unauthorized', { status: 401 });
+    return new NextResponse("Unauthorized", { status: 401 });
   }
 
-  const tvl = await pool.query(
-    `SELECT COALESCE(SUM(amount),0) FROM defi_events`
+  // Call your backend API instead of querying DB directly
+  const res = await fetch(
+    `${process.env.BACKEND_URL}/api/stats`,
+    {
+      headers: {
+        "x-api-key": process.env.API_KEY,
+      },
+      cache: "no-store",
+    }
   );
 
-  const users = await pool.query(
-    `SELECT COUNT(DISTINCT sender) FROM defi_events`
-  );
+  const data = await res.json();
 
-  const events = await pool.query(
-    `SELECT * FROM defi_events ORDER BY created_at DESC LIMIT 50`
-  );
-
-  return NextResponse.json({
-    tvl: tvl.rows[0].coalesce,
-    users: users.rows[0].count,
-    events: events.rows
-  });
+  return NextResponse.json(data);
 }
