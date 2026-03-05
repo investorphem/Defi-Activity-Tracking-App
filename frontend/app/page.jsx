@@ -1,13 +1,38 @@
-export const dynamic = 'force-dynamic';
+"use client";
 
-import { fetchStats, fetchTvlHistory } from '../lib/api';
-import StatCard from '../components/StatCard';
-import EventsTable from '../components/EventsTable';
-import TvlChart from '../components/TvlChart';
+import { useEffect, useState } from "react";
+import { fetchStats, fetchTvlHistory } from "../lib/api";
+import StatCard from "../components/StatCard";
+import EventsTable from "../components/EventsTable";
+import TvlChart from "../components/TvlChart";
 
-export default async function Home() {
-  const stats = await fetchStats();
-  const tvl = await fetchTvlHistory();
+export default function Home() {
+  const [stats, setStats] = useState(null);
+  const [tvl, setTvl] = useState([]);
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const statsData = await fetchStats();
+        const tvlData = await fetchTvlHistory();
+        setStats(statsData);
+        setTvl(tvlData);
+      } catch (err) {
+        console.error("API error:", err);
+      }
+    }
+
+    load();
+  }, []);
+
+  if (!stats) {
+    return (
+      <main className="space-y-6">
+        <h1 className="text-3xl font-bold">Stacks DeFi Activity Tracker</h1>
+        <p>Loading analytics...</p>
+      </main>
+    );
+  }
 
   return (
     <main className="space-y-6">
