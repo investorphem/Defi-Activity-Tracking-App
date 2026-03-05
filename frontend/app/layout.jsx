@@ -22,7 +22,7 @@ export const metadata = {
     siteName: "Stacks DeFi Activity Tracker",
     images: [
       {
-        url: "/og-image.png",
+        url: "/preview.png",
         width: 1200,
         height: 630,
         alt: "Stacks DeFi Tracker Preview",
@@ -36,7 +36,7 @@ export const metadata = {
     card: "summary_large_image",
     title: "Stacks DeFi Activity Tracker",
     description: "Real-time DeFi analytics on Stacks",
-    images: ["/og-image.png"],
+    images: ["/preview.png"],
   },
 };
 
