@@ -3,7 +3,7 @@ export const metadata = {
   description: "Real-time DeFi analytics on Stacks using Hiro Chainhooks",
 
   icons: {
-    icon: "/favicon.ico",
+    icon: "/preview.png",
     shortcut: "/favicon.ico",
     apple: "/apple-touch-icon.png",
   },
