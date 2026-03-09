@@ -5,7 +5,7 @@ export const metadata = {
   icons: {
     icon: "/preview.png",
     shortcut: "/favicon.ico",
-    apple: "/apple-touch-icon.png",
+    apple: "/apple-touch-icon.png"
   },
 
   themeColor: "#0f172a",
