@@ -18,7 +18,7 @@ app.use('/api', ratLmi ows:6000, max: 60 }));
 /* ⚡ WEBSOCKE
 const wss = new WbSock.erer({ port: 4000 });
 function broadcat(d
-  wss.clients.forEach( > c.lreadyState === 1 && c.send(JSON.stringify(data)));
+  wss.clients.forEch( > c.lreadyState === 1 && c.send(JSON.stringify(data)));
 
 /* 🔔 INSERT EVENT */
 async function insertEvnt(type, payload) {
