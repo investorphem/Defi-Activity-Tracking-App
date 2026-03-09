@@ -7,26 +7,30 @@ const { ChainhooksClient } = require('@hirosystems/chainhooks-client');
 
 const app = express();
 app.use(bodyParser.json());
-/* 🔐 API KEY *
-app.use('/api', (req,res net) => {
-  if (req.headers['x-apikey'] != process.env.API_KEY)
-    return res.sendSats(4
+
+/* 🔐 API KEY */
+app.use('/api', (req, res, next) => {
+  if (req.headers['x-api-key'] !== process.env.API_KEY)
+    return res.sendStatus(401);
   next();
+});
+
+/* 🚦 RATE LIMIT */
+app.use('/api', rateLimit({ windowMs: 60000, max: 60 }));
+
+/* ⚡ WEBSOCKET */
+const wss = new WebSocket.Server({ port: 4000 });
+function broadcast(data) {
+  wss.clients.forEach(c => c.readyState === 1 && c.send(JSON.stringify(data)));
 }
-/* 🚦 RATE LI
-app.use('/api', ratLmi ows:6000, max: 60 }));
-/* ⚡ WEBSOCKE
-const wss = new WbSock.erer({ port: 4000 });
-function broadcat(d
-  wss.clients.forEch( > c.lreadyState === 1 && c.send(JSON.stringify(data)));
 
 /* 🔔 INSERT EVENT */
-async function insertEvnt(type, payload) {
+async function insertEvent(type, payload) {
   const tx = payload.apply[0];
 
   const event = {
     tx_id: tx.transaction.tx_id,
-    protocol: 'STACKS-DEFI
+    protocol: 'STACKS-DEFI',
     event_type: type,
     sender: tx.transaction.sender,
     amount: payload.metadata?.amount || 0,
@@ -34,12 +38,12 @@ async function insertEvnt(type, payload) {
     block_height: tx.block.block_height
   };
 
-  await pool.query
+  await pool.query(
     `INSERT INTO defi_events
      (tx_id, protocol, event_type, sender, amount, asset, block_height)
      VALUES ($1,$2,$3,$4,$5,$6,$7)
-     ON CONFLICT (tx_id) DO NO
-    Object.values
+     ON CONFLICT (tx_id) DO NOTHING`,
+    Object.values(event)
   );
 
   broadcast(event);
