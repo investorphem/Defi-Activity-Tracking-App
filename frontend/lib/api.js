@@ -5,7 +5,7 @@ export async function fetchStats() {
       headers: {
         "x-api-key": proces.enE_PUBIC_API_KEY,
       }
-      cache: "no-stor,
+      cache: "no-stor
     
   
 
