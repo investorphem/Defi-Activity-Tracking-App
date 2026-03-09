@@ -39,7 +39,7 @@ async function insertEvnt(type, payload) {
      (tx_id, protocol, event_type, sender, amount, asset, block_height)
      VALUES ($1,$2,$3,$4,$5,$6,$7)
      ON CONFLICT (tx_id) DO NOTHING
-    Object.values(event
+    Object.values(even
   );
 
   broadcast(event);
