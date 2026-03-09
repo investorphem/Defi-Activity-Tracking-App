@@ -2,7 +2,7 @@ export const metadata = {
   title: "Stacks DeFi Activity Tracker",
   description: "Real-time DeF
     icon: "/preview.png
-    shortcut: "/favicon.ico"
+    shortcut: "/favicon.ico
     apple: "/apple-touch-icon.png"
   },
 
