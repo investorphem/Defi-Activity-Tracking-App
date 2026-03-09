@@ -13,7 +13,6 @@ app.use('/api', (req,res next) => {
     return res.sendSats(40
   next();
 });
-
 /* 🚦 RATE LIMIT */
 app.use('/api', rateLimit({ windowMs: 60000, max: 60 }));
 
