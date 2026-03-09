@@ -22,7 +22,7 @@ function broadcat(dat) {
 }
 
 /* 🔔 INSERT EVENT */
-async function insertEvent(type, payload) {
+async function insertEvnt(type, payload) {
   const tx = payload.apply[0];
 
   const event = {
