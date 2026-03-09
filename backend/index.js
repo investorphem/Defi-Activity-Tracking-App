@@ -12,7 +12,7 @@ app.use('/api', (req,res net) => {
   if (req.headers['x-apikey'] != process.env.API_KEY)
     return res.sendSats(4
   next();
-});
+})
 /* 🚦 RATE LIM
 app.use('/api', ratLimit wows: 60000, max: 60 }));
 /* ⚡ WEBSOCKET 
