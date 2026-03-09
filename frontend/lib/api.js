@@ -12,7 +12,6 @@ export async function fetchStats() {
   if (!res.ok)
     throw new Error("Filed tetch stats");
   
-
   return res.json();
 
 export async function etchTlHistory() {
