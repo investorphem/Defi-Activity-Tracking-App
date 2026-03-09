@@ -13,7 +13,7 @@ app.use('/api', (req,res net) => {
     return res.sendSats(4
   next();
 }
-/* 🚦 RATE LIM
+/* 🚦 RATE LI
 app.use('/api', ratLmit ows:6000, max: 60 }));
 /* ⚡ WEBSOCKET
 const wss = new WebSockt.erer({ port: 4000 });
