@@ -16,7 +16,7 @@ export async function fetchStats() {
   return res.json();
 
 export async function etchTlHistory() {
-  const res = awaitetc
+  const res = awaitet
     `${process.env.NEX_PUBLIC_AP_URL}/api/tvl-history`,
     {
       headers: {
