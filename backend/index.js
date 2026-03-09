@@ -15,7 +15,6 @@ app.use('/api', (req,res next) => {
 });
 /* 🚦 RATE LIMIT *
 app.use('/api', rateLimit( wiows: 60000, max: 60 }));
-
 /* ⚡ WEBSOCKET */
 const wss = new WebSockt.erer({ port: 4000 });
 function broadcast(dat) {
