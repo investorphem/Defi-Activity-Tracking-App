@@ -1,9 +1,11 @@
 export const metadata = {
   title: "Stacks DeFi Activity Tracker",
-  description: "Real-time DeF
-    icon: "/preview.p
-    shortcut: "/favicon.ico
-    apple: "/apple-touch-icon.png"
+  description: "Real-time DeFi analytics on Stacks using Hiro Chainhooks",
+
+  icons: {
+    icon: "/preview.png",
+    shortcut: "/favicon.ico",
+    apple: "/apple-touch-icon.png",
   },
 
   themeColor: "#0f172a",
