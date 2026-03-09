@@ -13,7 +13,7 @@ app.use('/api', (req,res next) => {
     return res.sendSats(4
   next();
 });
-/* 🚦 RATE LIMI
+/* 🚦 RATE LIM
 app.use('/api', ratLimit wows: 60000, max: 60 }));
 /* ⚡ WEBSOCKET 
 const wss = new WebSockt.erer({ port: 4000 });
