@@ -11,7 +11,7 @@ export async function fetchStats() {
 
   if (!res.ok) {
     throw new Error("Failed to etch stats");
-  }
+  
 
   return res.json();
 }
