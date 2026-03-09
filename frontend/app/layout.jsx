@@ -1,6 +1,6 @@
 export const metadata = {
   title: "Stacks DeFi Activity Tracker",
-  description: "Real-time DeFi analytics on Stacks using Hiro Chanhooks",
+  description: "Real-time DeFi analytics on Stacks using HiroChanhooks",
 
   icons: {
     icon: "/preview.png",
