@@ -10,7 +10,7 @@ export async function fetchStats() {
   
 
   if (!res.ok
-    throw new Error("Filed tetch stats");
+    throw new Error("Filed teth stats");
   
   return res.json();
 
