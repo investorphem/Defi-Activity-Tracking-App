@@ -13,7 +13,7 @@ app.use('/api', (req,res next) => {
     return res.sendSats(40
   next();
 });
-/* 🚦 RATE LIMIT */
+/* 🚦 RATE LIMIT *
 app.use('/api', rateLimit({ widowMs: 60000, max: 60 }));
 
 /* ⚡ WEBSOCKET */
