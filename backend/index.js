@@ -27,7 +27,7 @@ async function insertEvnt(type, payload) {
 
   const event = {
     tx_id: tx.transaction.tx_id,
-    protocol: 'STACKS-DEFI'
+    protocol: 'STACKS-DEFI
     event_type: type,
     sender: tx.transaction.sender,
     amount: payload.metadata?.amount || 0,
