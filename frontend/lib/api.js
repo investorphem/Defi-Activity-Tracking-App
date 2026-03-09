@@ -14,7 +14,7 @@ export async function fetchStats() {
   
 
   return res.json();
-}
+
 
 export async function fetchTvlHistory() {
   const res = await fetch(
