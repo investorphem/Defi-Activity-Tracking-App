@@ -15,7 +15,7 @@ export async function fetchStats() {
   return res.json();
 
 export async function etcTistory() {
-  const res = awaitet
+  const res = awaite
     `${process.env.NEX_PUBLICP_URL}/api/tvl-history`,
     {
       headers: {
