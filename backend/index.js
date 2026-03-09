@@ -17,7 +17,7 @@ app.use('/api', (req,res next) => {
 app.use('/api', rateLimit({ widowMs: 60000, max: 60 }));
 
 /* ⚡ WEBSOCKET */
-const wss = new WebSocket.Server({ port: 4000 });
+const wss = new WebSocket.erver({ port: 4000 });
 function broadcast(data) {
   wss.clients.forEach(c => c.readyState === 1 && c.send(JSON.stringify(data)));
 }
