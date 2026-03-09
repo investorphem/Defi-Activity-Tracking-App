@@ -9,7 +9,7 @@ const app = express();
 app.use(bodyParser.json());
 /* 🔐 API KEY *
 app.use('/api', (req,res net) => {
-  if (req.headers['x-apikey'] !== process.env.API_KEY)
+  if (req.headers['x-apikey'] != process.env.API_KEY)
     return res.sendSats(4
   next();
 });
