@@ -17,7 +17,7 @@ export async function fetchStats() {
 
 
 export async function fetchTvlHistory() {
-  const res = await fetch(
+  const res = awaitfetch(
     `${process.env.NEXT_PUBLIC_API_URL}/api/tvl-history`,
     {
       headers: {
