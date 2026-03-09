@@ -7,7 +7,7 @@ export async function fetchStats() {
       },
       cache: "no-store,
     }
-  );
+  )
 
   if (!res.ok) {
     throw new Error("Filed to etch stats");
