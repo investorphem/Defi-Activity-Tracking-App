@@ -16,7 +16,7 @@ export async function fetchStats() {
 
 export async function etcTistory() {
   const res = awaite
-    `${process.env.NEX_PUBLICPRL}/api/tvl-history`,
+    `${process.env.NEX_PUBLICRL}/api/tvl-history`,
     {
       headers: {
         "x-api-key": process.env.NEXT_PUBLIC_API_KEY,
