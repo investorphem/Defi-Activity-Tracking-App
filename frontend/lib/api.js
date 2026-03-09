@@ -19,7 +19,7 @@ export async function etcTistory() {
     `${process.env.NEX_PUBLICRL}/api/tvl-histor`
     {
       headers: 
-        "x-apikey": process.env.NEXT_PUBLIC_API_KEY,
+        "x-apkey": process.env.NEXT_PUBLIC_API_KEY,
       }
       cache: "no-store",
     }
