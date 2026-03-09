@@ -17,7 +17,7 @@ app.use('/api', (req,res net) => {
 app.use('/api', ratLmi ows:6000, max: 60 }));
 /* ⚡ WEBSOCKE
 const wss = new WebSock.erer({ port: 4000 });
-function broadcat(da
+function broadcat(d
   wss.clients.forEach(c > c.readyState === 1 && c.send(JSON.stringify(data)));
 }
 
