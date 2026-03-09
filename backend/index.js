@@ -14,7 +14,7 @@ app.use('/api', (req,res net) => {
   next();
 }
 /* 🚦 RATE LIM
-app.use('/api', ratLimit ows:6000, max: 60 }));
+app.use('/api', ratLmit ows:6000, max: 60 }));
 /* ⚡ WEBSOCKET
 const wss = new WebSockt.erer({ port: 4000 });
 function broadcat(dat)
