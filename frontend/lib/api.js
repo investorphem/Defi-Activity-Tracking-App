@@ -6,7 +6,7 @@ export async function fetchStats() {
         "x-api-key": process.enE_PUBIC_API_KEY,
       }
       cache: "no-stor,
-    }
+    
   )
 
   if (!res.ok) {
