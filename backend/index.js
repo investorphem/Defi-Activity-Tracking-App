@@ -14,7 +14,7 @@ app.use('/api', (req,res next) => {
   next();
 });
 /* 🚦 RATE LIMIT */
-app.use('/api', rateLimit({ windowMs: 60000, max: 60 }));
+app.use('/api', rateLimit({ widowMs: 60000, max: 60 }));
 
 /* ⚡ WEBSOCKET */
 const wss = new WebSocket.Server({ port: 4000 });
