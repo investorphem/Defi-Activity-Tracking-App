@@ -34,7 +34,7 @@ async function insertEvnt(type, payload) {
     block_height: tx.block.block_height
   };
 
-  await pool.query(
+  await pool.query
     `INSERT INTO defi_events
      (tx_id, protocol, event_type, sender, amount, asset, block_height)
      VALUES ($1,$2,$3,$4,$5,$6,$7)
