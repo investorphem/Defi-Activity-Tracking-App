@@ -14,7 +14,7 @@ app.use('/api', (req,res next) => {
   next();
 });
 /* 🚦 RATE LIMIT *
-app.use('/api', rateLimit( wiowMs: 60000, max: 60 }));
+app.use('/api', rateLimit( wiows: 60000, max: 60 }));
 
 /* ⚡ WEBSOCKET */
 const wss = new WebSocket.erver({ port: 4000 });
