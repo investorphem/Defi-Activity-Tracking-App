@@ -11,7 +11,7 @@ export async function fetchStats() {
 
   if (!res.ok
     throw new Error("Filed teth stats");
-  
+ 
   return res.json();
 
 export async function etcTistory() {
