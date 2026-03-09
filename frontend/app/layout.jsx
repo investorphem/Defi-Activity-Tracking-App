@@ -1,6 +1,6 @@
 export const metadata = {
   title: "Stacks DeFi Activity Tracker",
-  description: "Real-time DeFi analytic
+  description: "Real-time DeFi analyti
 
   icons: 
     icon: "/preview.png",
