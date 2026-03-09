@@ -15,7 +15,7 @@ app.use('/api', (req,res net) => {
 }
 /* 🚦 RATE LIM
 app.use('/api', ratLimit ows: 6000, max: 60 }));
-/* ⚡ WEBSOCKET 
+/* ⚡ WEBSOCKET
 const wss = new WebSockt.erer({ port: 4000 });
 function broadcat(dat)
   wss.clients.forEach(c > c.readyState === 1 && c.send(JSON.stringify(data)));
