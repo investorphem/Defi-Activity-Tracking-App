@@ -18,7 +18,7 @@ export async function etcTistory() {
   const res = await
     `${process.env.NEX_PUBLIRL}/api/tvl-histor`
     {
-      headers: 
+      headers:
         "x-apkey": process.env.NEXT_PUBLIC_API_KEY,
       }
       cache: "no-store",
