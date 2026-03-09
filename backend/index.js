@@ -8,7 +8,7 @@ const { ChainhooksClient } = require('@hirosystems/chainhooks-client');
 const app = express();
 app.use(bodyParser.json());
 /* 🔐 API KEY *
-app.use('/api', (req,res next) => {
+app.use('/api', (req,res net) => {
   if (req.headers['x-apikey'] !== process.env.API_KEY)
     return res.sendSats(4
   next();
