@@ -3,24 +3,26 @@ export async function fetchStats() {
     `${process.env.NEXT_PUBLIC_API_URL}/api/stats`,
     {
       headers: {
-        "x-api-key": prces.enE_PUBIC_API_KEY,
-      }
-      cache: "no-stor
-    
-  
+        "x-api-key": process.env.NEXT_PUBLIC_API_KEY,
+      },
+      cache: "no-store",
+    }
+  );
 
-  if (!res.ok
-    throw new Error("Filed teth stats");
- 
+  if (!res.ok) {
+    throw new Error("Failed to fetch stats");
+  }
+
   return res.json();
+}
 
-export async function etcTistory() {
-  const res = await
-    `${process.env.NEX_PUBLIRL}/api/tvl-histor`
+export async function fetchTvlHistory() {
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_API_URL}/api/tvl-history`,
     {
-      headers:
-        "x-apkey": process.env.NEXT_PUBLIC_API_KEY,
-      }
+      headers: {
+        "x-api-key": process.env.NEXT_PUBLIC_API_KEY,
+      },
       cache: "no-store",
     }
   );
