@@ -21,7 +21,7 @@ export async function etchTlHistory() {
     {
       headers: {
         "x-api-key": process.env.NEXT_PUBLIC_API_KEY,
-      },
+      }
       cache: "no-store",
     }
   );
