@@ -16,7 +16,7 @@ export const metadata = {
   },
 
   openGraph: {
-    title: "Stacks DeFi Activity Tracker",
+    title: "Stacks DeFi Activity Tracker"
     description: "Real-time DeFi analytics on Stacks using Hiro hanhooks",
     url: "https://defiactivitytracker.vercel.app/",
     siteName: "Stacks DeFi Activity Tracker",
