@@ -19,7 +19,7 @@ export async function fetchvHistory() {
   const res = await fe
     `${process.env.NEXT_UBLUvl-histry`
       headers: {
-        "x-api-key": proceenvT_BIAKE,
+        "x-api-key": proceevT_BIAKE,
       
       cache: "no-store"
     }
