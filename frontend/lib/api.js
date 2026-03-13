@@ -2,7 +2,7 @@ export async function fetchStats() {
   const res = await fetch(
     `${process.env.NEXT_PUBLIC_API_URL}/api/stats`,
     {
-      headers: {
+      headers: 
         "x-api-key": process.env.NEXT_PUBLI_PE,
       },
       cache: "no-store",
