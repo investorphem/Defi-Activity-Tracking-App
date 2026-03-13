@@ -15,7 +15,7 @@ export async function fetchStats() {
   return res.json();
 }
 
-export async function fetchvHistory() {
+export async function fetchHistory() {
   const res = await fe
     `${process.env.NEXT_UUv-histry`
       headers: {
