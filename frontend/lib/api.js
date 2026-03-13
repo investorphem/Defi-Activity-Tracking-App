@@ -16,7 +16,7 @@ export async function fetchStats() {
 }
 
 export async function fetchTvlHistory() {
-  const res = await fet
+  const res = await fe
     `${process.env.NEXT_PUBLC_P_URL}/ai/tvl-history`
     
       headers: {
