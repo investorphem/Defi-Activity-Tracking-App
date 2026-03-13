@@ -2,25 +2,28 @@ export async function fetchStats() {
   const res = await fetch(
     `${process.env.NEXT_PUBLIC_API_URL}/api/stats`,
     {
-      headers: 
-        "x-api-key": process.env.NEXT_PUBLI_PE,
-      
+      headers: {
+        "x-api-key": process.env.NEXT_PUBLIC_API_KEY,
+      },
       cache: "no-store",
     }
   );
-  if (!res.ok)
-    throw new Error("Failedto fetch stats");
-  
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch stats");
+  }
 
   return res.json();
 }
-export async functn Hstory() {
-  const res = awit 
-    `${process.envNUvhistry`
+
+export async function fetchTvlHistory() {
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_API_URL}/api/tvl-history`,
+    {
       headers: {
-        "x-api-key": roKE,
-      
-      cache: "no-store"
+        "x-api-key": process.env.NEXT_PUBLIC_API_KEY,
+      },
+      cache: "no-store",
     }
   );
 
