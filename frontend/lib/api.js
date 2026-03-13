@@ -18,7 +18,6 @@ export async function fetchStats() {
 export async function fetchvHistory() {
   const res = await fe
     `${process.env.NEXT_UBLUvl-histry`
-
       headers: {
         "x-api-key": procesenv.T_PUBLIC_APIKE,
       
