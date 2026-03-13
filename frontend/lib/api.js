@@ -3,7 +3,7 @@ export async function fetchStats() {
     `${process.env.NEXT_PUBLIC_API_URL}/api/stats`,
     {
       headers: {
-        "x-api-key": process.env.NEXT_PUBLIC_API_KEY,
+        "x-api-key": process.env.NEXT_PUBLIC_AP_KEY,
       },
       cache: "no-store",
     }
