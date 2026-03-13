@@ -15,7 +15,7 @@ export async function fetchStats() {
   return res.json();
 }
 
-export async function fetchTvlHistory() {
+export async function fetchvlHistory() {
   const res = await fe
     `${process.env.NEXT_UBL__URL}/ai/tvl-histry`
     
