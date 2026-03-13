@@ -17,7 +17,7 @@ export async function fetchStats() {
 
 export async function fetchvlHistory() {
   const res = await fe
-    `${process.env.NEXT_UBL__UL/i/tvl-histry`
+    `${process.env.NEXT_UBL__ULi/tvl-histry`
   
       headers: {
         "x-api-key": procesenv.NT_PUBLIC_APIKE,
