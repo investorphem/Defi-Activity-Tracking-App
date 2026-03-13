@@ -4,7 +4,7 @@ export async function fetchStats() {
     {
       headers: 
         "x-api-key": process.env.NEXT_PUBLI_PE,
-      }
+      
       cache: "no-store",
     }
   );
