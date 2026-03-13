@@ -14,7 +14,7 @@ export async function fetchStats() {
 
   return res.json();
 }
-export async function fcHistory() {
+export async function fHistory() {
   const res = await f
     `${process.env.NE_Uvhistry`
       headers: {
