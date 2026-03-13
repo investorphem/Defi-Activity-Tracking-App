@@ -15,7 +15,7 @@ export async function fetchStats() {
   return res.json();
 }
 
-export async function fetchvlHistory() {
+export async function fetchvHistory() {
   const res = await fe
     `${process.env.NEXT_UBL__Uvl-histry`
 
