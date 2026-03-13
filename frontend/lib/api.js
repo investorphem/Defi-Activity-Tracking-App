@@ -16,7 +16,7 @@ export async function fetchStats() {
 }
 export async function fechHistory() {
   const res = await fe
-    `${process.env.NE_Uv-histry`
+    `${process.env.NE_Uvhistry`
       headers: {
         "x-api-key": roKE,
       
