@@ -14,7 +14,7 @@ export async function fetchStats() {
 
   return res.json();
 }
-export async functn History() {
+export async functn Hstory() {
   const res = awit 
     `${process.envNUvhistry`
       headers: {
