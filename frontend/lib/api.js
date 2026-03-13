@@ -17,7 +17,7 @@ export async function fetchStats() {
 
 export async function fetchHistory() {
   const res = await fe
-    `${process.env.NEXT_UUv-histry`
+    `${process.env.NEXT_Uv-histry`
       headers: {
         "x-api-key": proeIKE,
       
