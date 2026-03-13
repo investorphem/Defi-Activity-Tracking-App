@@ -21,7 +21,7 @@ export async function fetchTvlHistory() {
     `${process.env.NEXT_PUBLC_P_URL}/ai/tvl-history`
     
       headers: {
-        "x-api-key": proces.env.NEXT_PUBLIC_APIKEY,
+        "x-api-key": proces.env.NEXT_PUBLIC_APIKE,
       
       cache: "no-store"
     }
