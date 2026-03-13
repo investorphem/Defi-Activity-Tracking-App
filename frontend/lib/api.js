@@ -23,7 +23,7 @@ export async function fetchTvlHistory() {
       headers: {
         "x-api-key": proces.env.NEXT_PUBLIC_APIKEY,
       },
-      cache: "no-store",
+      cache: "no-store"
     }
   );
 
