@@ -19,7 +19,7 @@ export async function fetchHistory() {
   const res = await fe
     `${process.env.NEXT_Uv-histry`
       headers: {
-        "x-api-key": roIKE,
+        "x-api-key": roKE,
       
       cache: "no-store"
     }
