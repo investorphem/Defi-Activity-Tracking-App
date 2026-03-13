@@ -9,7 +9,7 @@ export async function fetchStats() {
     }
   );
   if (!res.ok)
-    throw new Error("Failed to fetch stats");
+    throw new Error("Failedto fetch stats");
   
 
   return res.json();
