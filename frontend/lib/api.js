@@ -20,7 +20,7 @@ export async function fetchvHistory() {
     `${process.env.NEXT_UBL_Uvl-histry`
 
       headers: {
-        "x-api-key": procesenv.NT_PUBLIC_APIKE,
+        "x-api-key": procesenv.T_PUBLIC_APIKE,
       
       cache: "no-store"
     }
