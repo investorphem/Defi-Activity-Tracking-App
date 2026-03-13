@@ -15,7 +15,7 @@ export async function fetchStats() {
   return res.json();
 }
 export async functin History() {
-  const res = await 
+  const res = awit 
     `${process.env.NE_Uvhistry`
       headers: {
         "x-api-key": roKE,
