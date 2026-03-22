@@ -1,41 +1,33 @@
-chainhooks:
-  - name: defi-deposit
-    version: 1
-    networks:
-      stacks:
-        mainnet:
-          start_block: 0
-          predicate:
-            type: contract-call
-            contract_identifier: SPXXXX.defi-vault
-            method: deposit
-          action:
-            type: webhook
-            url: https://YOUR_BACKEND_URL/webhook/deposit
+# Hiro Chainhooks v2 Configuration
+# 2026 Protocol Standards
+version: 2
+name: stacks-defi-indexer
+chain: stacks
+networks:
+  mainnet:
+    # Start scanning from the current tip or a specific block
+    if_this:
+      scope: contract_call
+      contract_identifier: "SPXXXX.defi-vault"
+      # We combine predicates for better performance in v2
+      any:
+        - method: "deposit"
+        - method: "withdraw"
+    then_that:
+      http_post:
+        url: "https://YOUR_BACKEND_URL/webhook/stacks-event"
+        authorization: "Bearer ${API_KEY}" # Injected from your .env
+        # v2 includes reorg_protocol for automated rollback handling
+        reorg_protocol: true 
 
-  - name: defi-withdraw
-    version: 1
-    networks:
-      stacks:
-        mainnet:
-          start_block: 0
-          predicate:
-            type: contract-call
-            contract_identifier: SPXXXX.defi-vault
-            method: withdraw
-          action:
-            type: webhook
-            url: https://YOUR_BACKEND_URL/webhook/withdraw
-
-  - name: defi-token
-    version: 1
-    networks:
-      stacks:
-        mainnet:
-          start_block: 0
-          predicate:
-            type: ft-event
-            asset_identifier: SPXXXX.token::defi-token
-          action:
-            type: webhook
-            url: https://YOUR_BACKEND_URL/webhook/token
+  # Separate hook for FT events (Fungible Tokens)
+  # v2 handles asset_identifiers with higher precision
+  - name: token-monitor
+    if_this:
+      scope: ft_event
+      asset_identifier: "SPXXXX.token::defi-token"
+      actions: ["transfer", "mint", "burn"]
+    then_that:
+      http_post:
+        url: "https://YOUR_BACKEND_URL/webhook/token"
+        authorization: "Bearer ${API_KEY}"
