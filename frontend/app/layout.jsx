@@ -1,14 +1,19 @@
+import "./globals.css"; // Ensure your Tailwind styles are imported
+
+export const viewport = {
+  themeColor: "#0f172a",
+};
+
 export const metadata = {
   title: "Stacks DeFi Activity Tracker",
   description: "Real-time DeFi analytics on Stacks using Hiro Chainhooks",
+  metadataBase: new URL("https://defiactivitytracker.vercel.app/"), // Important for relative image paths
 
   icons: {
     icon: "/preview.png",
     shortcut: "/favicon.ico",
     apple: "/preview.png",
   },
-
-  themeColor: "#0f172a",
 
   other: {
     "talentapp:project_verification":
@@ -43,7 +48,14 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body className="p-6">{children}</body>
+      {/* Added min-h-screen and a dark-friendly background 
+        to match your #0f172a theme color 
+      */}
+      <body className="min-h-screen bg-slate-50 text-slate-900 antialiased selection:bg-orange-100 selection:text-orange-900">
+        <div className="max-w-5xl mx-auto p-4 md:p-8">
+          {children}
+        </div>
+      </body>
     </html>
   );
 }
