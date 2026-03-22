@@ -1,7 +1,7 @@
 {
   "name": "stacks-defi-backend-pro",
-  "version": "1.1.0",
-  "description": "High-performance DeFi ingestion engine for Stacks",
+  "version": "2.0.0",
+  "description": "Nakamoto-ready DeFi ingestion engine for Stacks",
   "main": "index.js",
   "type": "module", 
   "scripts": {
@@ -10,14 +10,15 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "@hirosystems/chainhooks-client": "^1.2.0",
+    "@hirosystems/chainhooks-client": "^2.0.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.0",
     "express-rate-limit": "^7.4.0",
     "helmet": "^8.0.0",
     "pg": "^8.13.0",
-    "ws": "^8.18.0"
+    "ws": "^8.18.0",
+    "undici": "^6.0.0" 
   },
   "devDependencies": {
     "nodemon": "^3.1.4"
