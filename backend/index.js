@@ -1,114 +1,137 @@
-const express = require('express');
-const bodyParser = require('body-parser');
-const pool = require('./db');
-const rateLimit = require('express-rate-limit');
-const WebSocket = require('ws');
-const { ChainhooksClient } = require('@hirosystems/chainhooks-client');
+import express from 'express';
+import { createServer } from 'http';
+import { WebSocketServer } from 'ws';
+import cors from 'cors';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
+import pool from './db.js';
 
 const app = express();
-app.use(bodyParser.json());
+const httpServer = createServer(app);
 
-/* 🔐 API KEY */
-app.use('/api', (req, res, next) => {
-  if (req.headers['x-api-key'] !== process.env.API_KEY)
-    return res.sendStatus(401);
-  next();
-});
+// 1. High-End Security & Middleware
+app.use(helmet()); // Protects against common web vulnerabilities
+app.use(cors());   // Allows your Vercel frontend to talk to this backend
+app.use(express.json());
 
-/* 🚦 RATE LIMIT */
-app.use('/api', rateLimit({ windowMs: 60000, max: 60 }));
+// 2. Premium WebSocket Architecture
+const wss = new WebSocketServer({ server: httpServer });
 
-/* ⚡ WEBSOCKET */
-const wss = new WebSocket.Server({ port: 4000 });
 function broadcast(data) {
-  wss.clients.forEach(c => c.readyState === 1 && c.send(JSON.stringify(data)));
+  const message = JSON.stringify(data);
+  wss.clients.forEach((client) => {
+    if (client.readyState === 1) client.send(message);
+  });
 }
 
-/* 🔔 INSERT EVENT */
-async function insertEvent(type, payload) {
-  const tx = payload.apply[0];
-
-  const event = {
-    tx_id: tx.transaction.tx_id,
-    protocol: 'STACKS-DEFI',
-    event_type: type,
-    sender: tx.transaction.sender,
-    amount: payload.metadata?.amount || 0,
-    asset: payload.metadata?.asset || 'STX',
-    block_height: tx.block.block_height
-  };
-
-  await pool.query(
-    `INSERT INTO defi_events
-     (tx_id, protocol, event_type, sender, amount, asset, block_height)
-     VALUES ($1,$2,$3,$4,$5,$6,$7)
-     ON CONFLICT (tx_id) DO NOTHING`,
-    Object.values(event)
-  );
-
-  broadcast(event);
-}
-
-/* 🌐 MANUAL WEBHOOK */
-app.post('/webhook/:type', async (req, res) => {
-  await insertEvent(req.params.type, req.body);
-  res.sendStatus(200);
+wss.on('connection', (ws) => {
+  console.log('⚡ [WS] Client connected to live stream');
 });
 
-/* 🔗 HIRO CHAINHOOKS */
-const chainhooks = new ChainhooksClient({
-  url: process.env.CHAINHOOKS_URL,
-  apiKey: process.env.CHAINHOOKS_API_KEY
+// 3. API Key & Rate Limiting (Protects your Stacks Data)
+const apiGate = (req, res, next) => {
+  const apiKey = req.headers['x-api-key'];
+  if (!apiKey || apiKey !== process.env.API_KEY) {
+    return res.status(401).json({ error: 'Invalid API Key' });
+  }
+  next();
+};
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per window
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 
-chainhooks.on('event', async (payload) => {
+// 4. Advanced Analytics Routes
+app.get('/api/stats', limiter, apiGate, async (req, res) => {
   try {
-    await insertEvent('token_transfer', payload);
+    // Parallel execution for maximum speed
+    const [tvlRes, userRes, eventRes] = await Promise.all([
+      pool.query(`SELECT SUM(amount) as total FROM defi_events WHERE event_type ILIKE 'deposit'`),
+      pool.query(`SELECT COUNT(DISTINCT sender) as count FROM defi_events`),
+      pool.query(`SELECT * FROM defi_events ORDER BY created_at DESC LIMIT 15`)
+    ]);
+
+    res.json({
+      tvl: parseFloat(tvlRes.rows[0].total || 0),
+      users: parseInt(userRes.rows[0].count || 0),
+      events: eventRes.rows
+    });
   } catch (err) {
-    console.error('Chainhooks insert error:', err);
+    res.status(500).json({ error: 'Analytics Engine Error' });
   }
 });
 
-chainhooks.connect().then(() => console.log('Connected to Hiro Chainhooks'));
-
-/* 📊 STATS */
-app.get('/api/stats', async (_, res) => {
-  const tvl = await pool.query(
-    `SELECT COALESCE(SUM(amount),0) FROM defi_events WHERE event_type='deposit'`
-  );
-  const users = await pool.query(
-    `SELECT COUNT(DISTINCT sender) FROM defi_events`
-  );
-  const events = await pool.query(
-    `SELECT * FROM defi_events ORDER BY created_at DESC LIMIT 50`
-  );
-
-  res.json({
-    tvl: tvl.rows[0].coalesce,
-    users: users.rows[0].count,
-    events: events.rows
-  });
+app.get('/api/tvl-history', limiter, apiGate, async (req, res) => {
+  try {
+    const { rows } = await pool.query(`
+      SELECT 
+        TO_CHAR(created_at, 'YYYY-MM-DD') as day, 
+        SUM(amount) OVER (ORDER BY DATE(created_at)) as tvl
+      FROM defi_events
+      GROUP BY DATE(created_at), amount, created_at
+      ORDER BY day ASC
+    `);
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: 'History Engine Error' });
+  }
 });
 
-/* 📈 TVL HISTORY */
-app.get('/api/tvl-history', async (_, res) => {
-  const { rows } = await pool.query(`
-    SELECT DATE(created_at) as day, SUM(amount) as tvl
-    FROM defi_events
-    WHERE event_type='deposit'
-    GROUP BY day
-    ORDER BY day ASC
+app.get('/api/wallet/:address', limiter, apiGate, async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT * FROM defi_events WHERE sender = $1 OR tx_id = $1 ORDER BY created_at DESC LIMIT 50`,
+      [req.params.address]
+    );
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: 'Wallet Lookup Error' });
+  }
+});
+
+// 5. Chainhook/Webhook Ingestion
+app.post('/webhook/:type', apiGate, async (req, res) => {
+  const { type } = req.params;
+  const payload = req.body;
+
+  try {
+    // Process the event (simplified for brevity)
+    const tx = payload.apply?.[0]?.transactions?.[0];
+    if (!tx) return res.status(400).send('No TX found');
+
+    const event = {
+      tx_id: tx.transaction_identifier.hash,
+      protocol: 'STACKS-DEFI',
+      event_type: type.toUpperCase(),
+      sender: tx.metadata.sender,
+      amount: payload.metadata?.amount || 0,
+      asset: payload.metadata?.asset || 'STX',
+      block_height: payload.apply[0].block_identifier.index
+    };
+
+    await pool.query(
+      `INSERT INTO defi_events (tx_id, protocol, event_type, sender, amount, asset, block_height)
+       VALUES ($1, $2, $3, $4, $5, $6, $7) ON CONFLICT DO NOTHING`,
+      Object.values(event)
+    );
+
+    broadcast({ type: 'NEW_EVENT', ...event });
+    res.status(200).send('Event Logged');
+  } catch (err) {
+    console.error('Webhook Error:', err);
+    res.status(500).send('Processing Failed');
+  }
+});
+
+// Start Server
+const PORT = process.env.PORT || 3000;
+httpServer.listen(PORT, () => {
+  console.log(`
+  🚀 Stacks DeFi Engine Online
+  📡 API: http://localhost:${PORT}/api
+  ⚡ WS:  ws://localhost:${PORT}
   `);
-  res.json(rows);
 });
-
-/* 👤 WALLET PAGE */
-app.get('/api/wallet/:address', async (req, res) => {
-  const { rows } = await pool.query(
-    `SELECT * FROM defi_events WHERE sender=$1 ORDER BY created_at DESC`,
-    [req.params.address]
-  );
-  res.json(rows);
-});
-
-app.listen(3000, () => console.log('Backend running on :3000'));
