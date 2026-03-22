@@ -1,31 +1,29 @@
 import pg from 'pg';
 const { Pool } = pg;
 
-// Configuration for high-performance pooling
+// 1. THE CRITICAL FIX: Clean the string before the Pool sees it
+const rawUrl = process.env.DATABASE_URL || "";
+const cleanUrl = rawUrl.trim().replace(/^["']|["']$/g, "");
+
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: cleanUrl, // Use the cleaned version here
   ssl: { 
-    // Required for Vercel Postgres / Neon / AWS RDS
     rejectUnauthorized: false 
   },
-  // Advanced pooling settings for DeFi apps (Prevents "Too many clients" errors)
-  max: 20,                // Maximum number of clients in the pool
-  idleTimeoutMillis: 30000, // How long a client is allowed to remain idle before being closed
-  connectionTimeoutMillis: 2000, // How long to wait before timing out when connecting a new client
+  max: 20,
+  idleTimeoutMillis: 30000,
+  // Increased to 5000ms because TCP Proxies (centerbeam.proxy) 
+  // can be slightly slower to wake up than internal URLs
+  connectionTimeoutMillis: 5000, 
 });
 
 /**
- * Diagnostic: Listen for unexpected errors on idle clients
- * Essential for maintaining a "Beautiful & Robust" backend
+ * Diagnostic & Startup Check (Keep these - they are great!)
  */
 pool.on('error', (err) => {
   console.error('[Database] Unexpected error on idle client:', err.message);
-  // Do not exit the process; let the pool handle reconnection
 });
 
-/**
- * Startup Check: Verify connection to Stacks Data Store
- */
 const checkConnection = async () => {
   try {
     const client = await pool.connect();
@@ -33,6 +31,7 @@ const checkConnection = async () => {
     client.release();
   } catch (err) {
     console.error('❌ [Database] Connection failed:', err.message);
+    console.log('💡 Current URL being used (first 15 chars):', cleanUrl.substring(0, 15));
   }
 };
 
