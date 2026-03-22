@@ -3,7 +3,6 @@ import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
 import cors from 'cors';
 import helmet from 'helmet';
-import rateLimit from 'express-rate-limit';
 import pool from './db.js';
 
 const app = express();
@@ -20,31 +19,52 @@ function broadcast(data) {
   wss.clients.forEach((c) => c.readyState === 1 && c.send(JSON.stringify(data)));
 }
 
-// 3. API Key & Rate Limiting
+/** * 3. API Key Sanitizer & Gate
+ * Strips quotes automatically to fix the Railway "double quote" issue.
+ */
+const RAW_KEY = process.env.API_KEY || "";
+const API_KEY = RAW_KEY.trim().replace(/^["']|["']$/g, "");
+
 const apiGate = (req, res, next) => {
-  const apiKey = req.headers['x-api-key'] || req.headers['authorization']?.split(' ')[1];
-  if (apiKey !== process.env.API_KEY) return res.status(401).json({ error: 'Unauthorized' });
+  const providedKey = 
+    req.headers['x-api-key'] || 
+    req.headers['authorization']?.split(' ')[1] || 
+    req.query.apiKey; // Added query param support for easier testing
+
+  if (providedKey !== API_KEY) {
+    console.log(`❌ Auth Fail: Server wanted [${API_KEY.substring(0,3)}...], user sent [${providedKey?.substring(0,3)}...]`);
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
   next();
 };
 
-// 4. Analytics Routes (Unchanged logic, just ensure they stay performant)
+// 4. Analytics Routes
 app.get('/api/stats', apiGate, async (req, res) => {
-  const [tvl, users, events] = await Promise.all([
-    pool.query(`SELECT SUM(amount) FROM defi_events WHERE event_type='DEPOSIT'`),
-    pool.query(`SELECT COUNT(DISTINCT sender) FROM defi_events`),
-    pool.query(`SELECT * FROM defi_events ORDER BY created_at DESC LIMIT 15`)
-  ]);
-  res.json({ tvl: tvl.rows[0].sum, users: user.rows[0].count, events: events.rows });
+  try {
+    const [tvl, users, events] = await Promise.all([
+      pool.query(`SELECT SUM(amount) FROM defi_events WHERE event_type='DEPOSIT'`),
+      pool.query(`SELECT COUNT(DISTINCT sender) FROM defi_events`),
+      pool.query(`SELECT * FROM defi_events ORDER BY created_at DESC LIMIT 15`)
+    ]);
+
+    // FIX: Changed 'user.rows' to 'users.rows' to prevent crash
+    res.json({ 
+      tvl: tvl.rows[0]?.sum || 0, 
+      users: users.rows[0]?.count || 0, 
+      events: events.rows 
+    });
+  } catch (err) {
+    console.error('📊 Stats Error:', err.message);
+    res.status(500).json({ error: 'Database query failed' });
+  }
 });
 
-// 5. THE CRITICAL UPGRADE: Chainhooks v2 Ingestion
-// v2 uses a unified payload with 'apply' and 'rollback' arrays
+// 5. Chainhooks v2 Ingestion
 app.post('/webhook/stacks-event', apiGate, async (req, res) => {
   const payload = req.body;
 
   try {
-    // A. HANDLE ROLLBACKS (Essential for Nakamoto Finality)
-    // If a block is orphaned, Hiro tells us which TXs to "undo"
+    // A. HANDLE ROLLBACKS
     if (payload.rollback && payload.rollback.length > 0) {
       for (const block of payload.rollback) {
         const txIds = block.transactions.map(t => t.transaction_identifier.hash);
@@ -53,16 +73,15 @@ app.post('/webhook/stacks-event', apiGate, async (req, res) => {
       }
     }
 
-    // B. HANDLE NEW TRANSACTIONS (The 'Apply' phase)
+    // B. HANDLE NEW TRANSACTIONS (Apply phase)
     if (payload.apply && payload.apply.length > 0) {
       for (const block of payload.apply) {
         const blockHeight = block.block_identifier.index;
-        
+
         for (const tx of block.transactions) {
           const event = {
             tx_id: tx.transaction_identifier.hash,
             protocol: 'STACKS-DEFI',
-            // v2 provides method names in metadata for contract_calls
             event_type: tx.metadata?.kind?.data?.method?.toUpperCase() || 'TRANSFER',
             sender: tx.metadata.sender,
             amount: tx.metadata?.kind?.data?.amount || 0,
@@ -89,4 +108,7 @@ app.post('/webhook/stacks-event', apiGate, async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-httpServer.listen(PORT, () => console.log(`🚀 Stacks v2 Engine on port ${PORT}`));
+httpServer.listen(PORT, () => {
+  console.log(`🚀 Stacks v2 Engine active on port ${PORT}`);
+  console.log(`🔐 API Key Security: Active (Starts with: ${API_KEY.substring(0,3)})`);
+});
