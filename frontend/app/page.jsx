@@ -7,7 +7,7 @@ import useWebSocket from "react-use-websocket";
 import confetti from 'canvas-confetti';
 import { fetchStats, fetchTvlHistory } from "../lib/api";
 import { getPersonalActivity } from "./actions";
-import { isConnected, getLocalStorage, showConnect, authenticate } from "@stacks/connect";
+import { isConnected, getLocalStorage, showConnect } from "@stacks/connect";
 import StatCard from "../components/StatCard";
 import EventsTable from "../components/EventsTable";
 import TvlChart from "../components/TvlChart";
@@ -17,13 +17,21 @@ export default function Home() {
   const [personalEvents, setPersonalEvents] = useState([]);
   const [tvl, setTvl] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
-  const [view, setView] = useState("global"); 
   const [userAddress, setUserAddress] = useState(null);
+  const [view, setView] = useState("global");
+  const [mounted, setMounted] = useState(false); // Fix for Hydration
 
-  // --- 1. WEBSOCKET SETUP ---
+  // --- 1. MOUNT CHECK (Prevents Hydration Mismatch) ---
+  useEffect(() => {
+    setMounted(true);
+    if (isConnected()) {
+      const userData = getLocalStorage();
+      setUserAddress(userData?.addresses?.stx?.[0]?.address);
+    }
+  }, []);
+
+  // --- 2. WEBSOCKET SETUP ---
   const socketUrl = process.env.NEXT_PUBLIC_WS_URL || "wss://your-backend.railway.app";
-
   const { lastJsonMessage } = useWebSocket(socketUrl, {
     shouldReconnect: () => true,
     reconnectInterval: 3000,
@@ -32,7 +40,6 @@ export default function Home() {
   useEffect(() => {
     if (lastJsonMessage && lastJsonMessage.type === "LIVE_EVENT") {
       const newEvent = lastJsonMessage;
-
       setStats((prev) => {
         if (!prev) return prev;
         return {
@@ -44,30 +51,34 @@ export default function Home() {
 
       if (userAddress && newEvent.sender === userAddress) {
         setPersonalEvents((prev) => [newEvent, ...prev]);
-        // 🎊 Celebration for your own confirmed transaction
-        confetti({
-          particleCount: 150,
-          spread: 70,
-          origin: { y: 0.6 },
-          colors: ['#f97316', '#ffffff']
-        });
+        confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, colors: ['#f97316', '#ffffff'] });
       }
     }
   }, [lastJsonMessage, userAddress]);
 
-  // --- 2. AUTHENTICATION LOGIC ---
-  const handleConnect = () => {
-    showConnect({
-      appDetails: {
-        name: "Stacks DeFi Tracker",
-        icon: window.location.origin + "/favicon.ico",
-      },
-      onFinish: () => {
-        const userData = getLocalStorage();
-        setUserAddress(userData?.addresses?.stx?.[0]?.address);
-        window.location.reload(); 
-      },
-    });
+  // --- 3. UPDATED AUTHENTICATION (More Responsive) ---
+  const handleConnect = async () => {
+    try {
+      showConnect({
+        appDetails: {
+          name: "Stacks DeFi Tracker",
+          icon: window.location.origin + "/favicon.ico",
+        },
+        onFinish: () => {
+          const userData = getLocalStorage();
+          const address = userData?.addresses?.stx?.[0]?.address;
+          if (address) {
+            setUserAddress(address);
+            setView("personal");
+            // Gentle refresh to ensure all hooks sync
+            window.location.reload();
+          }
+        },
+        onCancel: () => console.log("User closed the wallet modal"),
+      });
+    } catch (err) {
+      console.error("Wallet connection error:", err);
+    }
   };
 
   const handleLogout = () => {
@@ -77,33 +88,23 @@ export default function Home() {
     window.location.reload();
   };
 
-  // --- 3. INITIAL LOAD ---
+  // --- 4. DATA FETCHING ---
   useEffect(() => {
-    if (isConnected()) {
-      const userData = getLocalStorage();
-      setUserAddress(userData?.addresses?.stx?.[0]?.address);
-    }
-
     async function loadInitialData() {
       try {
         setLoading(true);
-        const [statsData, tvlData] = await Promise.all([
-          fetchStats(),
-          fetchTvlHistory(),
-        ]);
+        const [statsData, tvlData] = await Promise.all([fetchStats(), fetchTvlHistory()]);
         setStats(statsData);
         setTvl(tvlData);
       } catch (err) {
         console.error("API error:", err);
-        setError(true);
       } finally {
         setLoading(false);
       }
     }
-    loadInitialData();
-  }, []);
+    if (mounted) loadInitialData();
+  }, [mounted]);
 
-  // --- 4. PERSONAL DATA SYNC ---
   useEffect(() => {
     async function loadPersonal() {
       if (view === "personal" && userAddress) {
@@ -128,6 +129,9 @@ export default function Home() {
     link.setAttribute("download", `stacks_activity_${view}.csv`);
     link.click();
   };
+
+  // Avoid rendering until mounted to prevent UI flickering
+  if (!mounted) return null;
 
   if (loading && !stats) return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
@@ -169,7 +173,7 @@ export default function Home() {
           ) : (
             <button 
               onClick={handleConnect}
-              className="flex items-center gap-2 px-6 py-2 bg-orange-600 hover:bg-orange-500 text-white rounded-lg font-bold transition shadow-lg shadow-orange-900/30"
+              className="flex items-center gap-2 px-6 py-2 bg-orange-600 hover:bg-orange-500 text-white rounded-lg font-bold transition shadow-lg shadow-orange-900/30 active:scale-95"
             >
               <Wallet className="w-4 h-4" /> Connect Wallet
             </button>
@@ -187,14 +191,12 @@ export default function Home() {
         <StatCard title="Network Transactions" value={stats?.events?.length || 0} icon={Activity} />
       </div>
 
-      {/* CHART SECTION */}
       <section className="relative bg-slate-900/50 border border-white/10 p-6 rounded-2xl backdrop-blur-sm">
         <div className="h-[350px] w-full">
           <TvlChart data={tvl} />
         </div>
       </section>
 
-      {/* EVENTS SECTION */}
       <section className="space-y-4">
         <div className="flex items-center justify-between px-1">
           <h2 className="text-xl font-space font-bold text-white flex items-center gap-2">
@@ -207,9 +209,7 @@ export default function Home() {
         </div>
         <div className="bg-slate-900/30 border border-white/5 rounded-2xl overflow-hidden backdrop-blur-sm min-h-[300px]">
           <AnimatePresence mode="popLayout">
-            <EventsTable 
-              events={view === "personal" ? personalEvents : (stats?.events || [])} 
-            />
+            <EventsTable events={view === "personal" ? personalEvents : (stats?.events || [])} />
           </AnimatePresence>
         </div>
       </section>
