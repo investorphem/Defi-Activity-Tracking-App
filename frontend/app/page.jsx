@@ -7,7 +7,7 @@ import { Activity, Users, TrendingUp, RefreshCw, Download, Zap, LogOut, Wallet, 
 import useWebSocket from "react-use-websocket";
 import confetti from 'canvas-confetti';
 
-// Project Imports
+// Project UI Components
 import { fetchStats, fetchTvlHistory } from "../lib/api";
 import { getPersonalActivity } from "./actions";
 import StatCard from "../components/StatCard";
@@ -15,7 +15,7 @@ import EventsTable from "../components/EventsTable";
 import TvlChart from "../components/TvlChart";
 
 export default function Home() {
-  // 1. Stable Session Initialization for v7.5
+  // 1. Stable Session Config for v7.5
   const appConfig = useMemo(() => new AppConfig(['store_write', 'publish_data']), []);
   const userSession = useMemo(() => new UserSession({ appConfig }), [appConfig]);
 
@@ -26,21 +26,28 @@ export default function Home() {
   const [userAddress, setUserAddress] = useState(null);
   const [view, setView] = useState("global");
   const [mounted, setMounted] = useState(false);
-  const [showToast, setShowToast] = useState(false);
 
-  // 2. Hydration & Session Recovery
+  // 2. SELF-HEALING SESSION RECOVERY
   useEffect(() => {
     setMounted(true);
-    if (userSession.isUserSignedIn()) {
-      const userData = userSession.loadUserData();
-      const address = userData.profile.stxAddress.mainnet || userData.profile.stxAddress.testnet;
-      setUserAddress(address);
+    try {
+      if (userSession.isUserSignedIn()) {
+        const userData = userSession.loadUserData();
+        const address = userData.profile.stxAddress.mainnet || userData.profile.stxAddress.testnet;
+        setUserAddress(address);
+      }
+    } catch (error) {
+      // 🚀 FIX: This catches the "JSON data version undefined" error 
+      // and clears the corrupted local storage so the app doesn't crash.
+      console.warn("Corrupted session detected. Resetting auth state...");
+      localStorage.removeItem('blockstack-session');
+      setUserAddress(null);
     }
   }, [userSession]);
 
-  // 3. The Re-Engineered Connection Logic
+  // 3. WALLET POPUP TRIGGER
   const handleConnect = useCallback(() => {
-    console.log("Initializing Stacks Auth...");
+    console.log("Button clicked: Launching Connect...");
     showConnect({
       appDetails: {
         name: "Stacks DeFi Tracker Pro",
@@ -48,10 +55,10 @@ export default function Home() {
       },
       userSession,
       onFinish: () => {
-        // Safe refresh ensures the session persists correctly across the app
+        // v7.5 requires a quick reload to properly finalize the browser state
         window.location.reload();
       },
-      onCancel: () => console.log("Connection Modal Closed")
+      onCancel: () => console.log("Connection closed by user")
     });
   }, [userSession]);
 
@@ -60,7 +67,7 @@ export default function Home() {
     window.location.reload();
   }, [userSession]);
 
-  // --- 4. DATA & WEBSOCKET LOGIC ---
+  // --- 4. WEBSOCKET & DATA FETCHING ---
   const socketUrl = process.env.NEXT_PUBLIC_WS_URL || "wss://your-backend.railway.app";
   const { lastJsonMessage } = useWebSocket(socketUrl, { shouldReconnect: () => true });
 
@@ -69,7 +76,7 @@ export default function Home() {
       const newEvent = lastJsonMessage;
       if (userAddress && (newEvent.sender === userAddress || newEvent.recipient === userAddress)) {
         setPersonalEvents((prev) => [newEvent, ...prev]);
-        confetti({ particleCount: 70, spread: 60 });
+        confetti({ particleCount: 50, spread: 60 });
       }
     }
   }, [lastJsonMessage, userAddress]);
@@ -82,6 +89,8 @@ export default function Home() {
         const [s, t] = await Promise.all([fetchStats(), fetchTvlHistory()]);
         setStats(s);
         setTvl(t);
+      } catch (e) {
+        console.error("Fetch error:", e);
       } finally { setLoading(false); }
     }
     loadData();
@@ -95,29 +104,19 @@ export default function Home() {
     }
   }, [view, userAddress]);
 
-  const exportToCSV = () => {
-    const data = view === "personal" ? personalEvents : stats?.events || [];
-    const csvContent = "data:text/csv;charset=utf-8," + ["ID,Type,Sender,Amount,Asset,Date", ...data.map(tx => `${tx.tx_id},${tx.event_type},${tx.sender},${tx.amount},${tx.asset},${tx.created_at}`)].join("\n");
-    const link = document.createElement("a");
-    link.setAttribute("href", encodeURI(csvContent));
-    link.setAttribute("download", `stacks_${view}.csv`);
-    link.click();
-  };
-
   if (!mounted) return null;
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-10 relative">
-      
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
           <h1 className="text-4xl md:text-5xl font-space font-bold text-white flex items-center gap-3">
             {view === "global" ? "DeFi Overview" : "My Activity"} 
             <Zap className="w-8 h-8 text-orange-500 fill-orange-500" />
           </h1>
-          <p className="text-slate-400 mt-2 flex items-center gap-2 font-medium">
+          <p className="text-slate-400 mt-2 flex items-center gap-2">
              <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-             Stacks Mainnet Monitoring
+             Live Network Feed
           </p>
         </div>
 
@@ -128,49 +127,36 @@ export default function Home() {
                 <span className="text-xs text-orange-400 font-mono px-3">
                   {userAddress.slice(0, 5)}...{userAddress.slice(-4)}
                 </span>
-                <button onClick={() => setView("global")} className={`px-4 py-1.5 rounded-lg text-xs font-bold transition ${view === 'global' ? 'bg-orange-600 text-white' : 'text-slate-400'}`}>Global</button>
-                <button onClick={() => setView("personal")} className={`px-4 py-1.5 rounded-lg text-xs font-bold transition ${view === 'personal' ? 'bg-blue-600 text-white' : 'text-slate-400'}`}>My Tx</button>
+                <button onClick={() => setView("global")} className={`px-4 py-1.5 rounded-lg text-xs font-bold transition ${view === 'global' ? 'bg-orange-600 text-white shadow-lg' : 'text-slate-400'}`}>Global</button>
+                <button onClick={() => setView("personal")} className={`px-4 py-1.5 rounded-lg text-xs font-bold transition ${view === 'personal' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400'}`}>My Tx</button>
               </div>
               <button onClick={handleLogout} className="p-2 text-slate-500 hover:text-red-400 transition-colors"><LogOut className="w-4 h-4" /></button>
             </div>
           ) : (
             <button 
               onClick={handleConnect} 
-              className="flex items-center gap-2 px-8 py-3 bg-gradient-to-tr from-orange-600 to-orange-700 text-white rounded-xl font-bold transition-all hover:scale-[1.02] active:scale-95 shadow-xl shadow-orange-500/30"
+              className="flex items-center gap-2 px-8 py-3 bg-gradient-to-tr from-orange-600 to-orange-700 text-white rounded-xl font-bold transition-all hover:scale-[1.02] active:scale-95 shadow-xl shadow-orange-900/40"
             >
               <Wallet className="w-5 h-5" /> Connect Wallet
             </button>
           )}
-          
-          <button onClick={exportToCSV} className="flex items-center gap-2 px-4 py-3 bg-slate-800/50 hover:bg-slate-700 border border-white/5 rounded-xl text-sm font-medium transition text-white">
-            <Download className="w-4 h-4" /> Export
-          </button>
         </div>
       </header>
 
-      {/* STATS CARDS */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <StatCard title="Total Value Locked" value={stats?.tvl || 0} icon={TrendingUp} isCurrency />
         <StatCard title="24h Active Users" value={stats?.users || 0} icon={Users} />
         <StatCard title="Network Events" value={stats?.events?.length || 0} icon={Activity} />
       </div>
 
-      {/* CHART SECTION */}
       <section className="bg-slate-900/40 border border-white/5 p-6 rounded-3xl backdrop-blur-md">
         <div className="h-[350px] w-full"><TvlChart data={tvl} /></div>
       </section>
 
-      {/* DATA TABLE */}
       <section className="space-y-4">
-        <div className="flex items-center justify-between px-2">
-          <h2 className="text-xl font-space font-bold text-white flex items-center gap-2">
-            {view === "global" ? "Global Feed" : "Personal Activity"}
-            {loading && <RefreshCw className="w-4 h-4 text-orange-500 animate-spin" />}
-          </h2>
-          <span className="text-xs text-slate-500 font-mono tracking-widest uppercase">
-            {userAddress ? "Sync Active" : "Scanning..."}
-          </span>
-        </div>
+        <h2 className="text-xl font-space font-bold text-white px-2">
+            {view === "global" ? "Transaction Feed" : "Personal History"}
+        </h2>
         <div className="bg-slate-900/20 border border-white/5 rounded-3xl overflow-hidden min-h-[400px]">
           <EventsTable events={view === "personal" ? personalEvents : (stats?.events || [])} />
         </div>
