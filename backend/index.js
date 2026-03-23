@@ -19,9 +19,7 @@ function broadcast(data) {
   wss.clients.forEach((c) => c.readyState === 1 && c.send(JSON.stringify(data)));
 }
 
-/** * 3. API Key Sanitizer & Gate
- * Strips quotes automatically to fix the Railway "double quote" issue.
- */
+/** * 3. API Key Sanitizer & Gate */
 const RAW_KEY = process.env.API_KEY || "";
 const API_KEY = RAW_KEY.trim().replace(/^["']|["']$/g, "");
 
@@ -29,10 +27,9 @@ const apiGate = (req, res, next) => {
   const providedKey = 
     req.headers['x-api-key'] || 
     req.headers['authorization']?.split(' ')[1] || 
-    req.query.apiKey; // Added query param support for easier testing
+    req.query.apiKey;
 
   if (providedKey !== API_KEY) {
-    console.log(`❌ Auth Fail: Server wanted [${API_KEY.substring(0,3)}...], user sent [${providedKey?.substring(0,3)}...]`);
     return res.status(401).json({ error: 'Unauthorized' });
   }
   next();
@@ -47,7 +44,6 @@ app.get('/api/stats', apiGate, async (req, res) => {
       pool.query(`SELECT * FROM defi_events ORDER BY created_at DESC LIMIT 15`)
     ]);
 
-    // FIX: Changed 'user.rows' to 'users.rows' to prevent crash
     res.json({ 
       tvl: tvl.rows[0]?.sum || 0, 
       users: users.rows[0]?.count || 0, 
@@ -59,12 +55,32 @@ app.get('/api/stats', apiGate, async (req, res) => {
   }
 });
 
+/**
+ * 4b. NEW ROUTE: TVL History for the Chart
+ * Fixes the 404 error seen in your browser console
+ */
+app.get('/api/tvl-history', apiGate, async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        TO_CHAR(created_at, 'YYYY-MM-DD') as date, 
+        SUM(amount) as total 
+      FROM defi_events 
+      GROUP BY 1 
+      ORDER BY 1 ASC 
+      LIMIT 30
+    `);
+    res.json(result.rows);
+  } catch (err) {
+    console.error('📈 History Error:', err.message);
+    res.status(500).json({ error: 'Failed to fetch history' });
+  }
+});
+
 // 5. Chainhooks v2 Ingestion
 app.post('/webhook/stacks-event', apiGate, async (req, res) => {
   const payload = req.body;
-
   try {
-    // A. HANDLE ROLLBACKS
     if (payload.rollback && payload.rollback.length > 0) {
       for (const block of payload.rollback) {
         const txIds = block.transactions.map(t => t.transaction_identifier.hash);
@@ -73,11 +89,9 @@ app.post('/webhook/stacks-event', apiGate, async (req, res) => {
       }
     }
 
-    // B. HANDLE NEW TRANSACTIONS (Apply phase)
     if (payload.apply && payload.apply.length > 0) {
       for (const block of payload.apply) {
         const blockHeight = block.block_identifier.index;
-
         for (const tx of block.transactions) {
           const event = {
             tx_id: tx.transaction_identifier.hash,
@@ -94,12 +108,10 @@ app.post('/webhook/stacks-event', apiGate, async (req, res) => {
              VALUES ($1,$2,$3,$4,$5,$6,$7) ON CONFLICT (tx_id) DO NOTHING`,
             Object.values(event)
           );
-
           broadcast({ type: 'LIVE_EVENT', ...event });
         }
       }
     }
-
     res.status(200).send('OK');
   } catch (err) {
     console.error('❌ Chainhook v2 Error:', err.message);
@@ -110,5 +122,4 @@ app.post('/webhook/stacks-event', apiGate, async (req, res) => {
 const PORT = process.env.PORT || 3000;
 httpServer.listen(PORT, () => {
   console.log(`🚀 Stacks v2 Engine active on port ${PORT}`);
-  console.log(`🔐 API Key Security: Active (Starts with: ${API_KEY.substring(0,3)})`);
 });
