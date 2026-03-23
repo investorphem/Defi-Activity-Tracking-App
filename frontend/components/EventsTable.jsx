@@ -1,94 +1,84 @@
-"use client";
+import React from 'react';
+import { ArrowUpRight, ArrowDownLeft, Code, Layers, ExternalLink } from 'lucide-react';
 
-import { ExternalLink, ArrowDownLeft, ArrowUpRight, Zap, Fingerprint } from "lucide-react";
-import { motion } from "framer-motion";
+const getTxStyle = (type) => {
+  const types = {
+    'smart_contract': {
+      color: 'text-purple-400 bg-purple-500/10 border-purple-500/20',
+      icon: <Code size={14} />,
+      label: 'Contract Call'
+    },
+    'stx_transfer': {
+      color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20',
+      icon: <ArrowUpRight size={14} />,
+      label: 'STX Transfer'
+    },
+    'token_transfer': {
+      color: 'text-blue-400 bg-blue-500/10 border-blue-500/20',
+      icon: <Layers size={14} />,
+      label: 'Token Tx'
+    },
+    'default': {
+      color: 'text-slate-400 bg-slate-500/10 border-slate-500/20',
+      icon: <Activity size={14} />,
+      label: 'Transaction'
+    }
+  };
+  return types[type] || types['default'];
+};
 
 export default function EventsTable({ events }) {
-  // Helper to shorten Stacks addresses: ST123...4567
-  const truncate = (str) => (str ? `${str.slice(0, 6)}...${str.slice(-4)}` : "Unknown");
-
-  if (!events || events.length === 0) {
-    return (
-      <div className="p-12 text-center bg-white/[0.02] rounded-2xl border border-dashed border-white/10">
-        <p className="text-slate-500 font-medium">No recent protocol events detected.</p>
-      </div>
-    );
-  }
-
   return (
     <div className="overflow-x-auto">
-      <table className="w-full text-left border-separate border-spacing-y-2">
+      <table className="w-full text-left border-collapse">
         <thead>
-          <tr className="text-slate-500 text-[10px] uppercase tracking-[0.2em] font-bold">
-            <th className="px-6 py-3">Origin / Sender</th>
-            <th className="px-6 py-3">Action Type</th>
-            <th className="px-6 py-3 text-right">Value (STX)</th>
-            <th className="px-6 py-3 text-right">Explorer</th>
+          <tr className="border-b border-white/5 bg-white/[0.02]">
+            <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Type</th>
+            <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Sender</th>
+            <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Amount</th>
+            <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
+            <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Time</th>
           </tr>
         </thead>
-        <tbody className="text-sm">
-          {events.map((e, index) => (
-            <motion.tr
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.05 }}
-              key={e.tx_id || index}
-              className="group bg-white/[0.02] hover:bg-white/[0.06] transition-all duration-200"
-            >
-              {/* SENDER COLUMN */}
-              <td className="px-6 py-4 rounded-l-xl">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center border border-white/5">
-                    <Fingerprint size={14} className="text-slate-400" />
+        <tbody className="divide-y divide-white/5">
+          {events.map((tx, i) => {
+            const style = getTxStyle(tx.event_type || tx.tx_type);
+            return (
+              <tr key={tx.tx_id || i} className="group hover:bg-white/[0.02] transition-colors">
+                <td className="px-6 py-4">
+                  <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full border ${style.color} text-xs font-medium`}>
+                    {style.icon}
+                    {style.label}
                   </div>
-                  <span className="font-mono text-slate-300 group-hover:text-white transition-colors">
-                    {truncate(e.sender)}
+                </td>
+                <td className="px-6 py-4 font-mono text-xs text-slate-400">
+                  {tx.sender?.slice(0, 6)}...{tx.sender?.slice(-4)}
+                </td>
+                <td className="px-6 py-4">
+                  <span className="text-white font-bold text-sm">
+                    {tx.amount ? `${Number(tx.amount).toLocaleString()} STX` : '-'}
                   </span>
-                </div>
-              </td>
-
-              {/* EVENT TYPE COLUMN */}
-              <td className="px-6 py-4">
-                <div className="flex items-center gap-2">
-                  <span className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider ${
-                    e.event_type?.toLowerCase().includes('deposit') 
-                      ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
-                      : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
-                  }`}>
-                    {e.event_type?.toLowerCase().includes('deposit') ? (
-                      <ArrowDownLeft size={12} />
-                    ) : (
-                      <Zap size={12} />
-                    )}
-                    {e.event_type || "Transfer"}
-                  </span>
-                </div>
-              </td>
-
-              {/* AMOUNT COLUMN */}
-              <td className="px-6 py-4 text-right">
-                <span className="font-mono font-bold text-white tracking-tight">
-                  {e.amount ? parseFloat(e.amount).toLocaleString() : "0.00"}
-                </span>
-                <span className="ml-1.5 text-[10px] text-slate-500 font-bold uppercase">STX</span>
-              </td>
-
-              {/* ACTION COLUMN */}
-              <td className="px-6 py-4 text-right rounded-r-xl">
-                <a
-                  href={`https://explorer.hiro.so/txid/${e.tx_id}?chain=mainnet`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-orange-500 hover:text-white transition-all text-slate-400 text-xs"
-                >
-                  <span className="hidden sm:inline">Details</span>
-                  <ExternalLink size={12} />
-                </a>
-              </td>
-            </motion.tr>
-          ))}
+                </td>
+                <td className="px-6 py-4">
+                  <div className="flex items-center gap-1.5 text-xs text-emerald-500">
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    Confirmed
+                  </div>
+                </td>
+                <td className="px-6 py-4 text-xs text-slate-500">
+                  {new Date(tx.created_at || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
+      
+      {events.length === 0 && (
+        <div className="py-20 text-center text-slate-500 text-sm">
+          No transactions found in this view.
+        </div>
+      )}
     </div>
   );
 }
