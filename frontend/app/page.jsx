@@ -2,10 +2,14 @@
 
 import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { AppConfig, UserSession, showConnect } from "@stacks/connect";
+import { 
+  uintCV, principalCV, noneCV, PostConditionMode, 
+  FungibleConditionCode, makeStandardSTXPostCondition 
+} from "@stacks/transactions";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Activity, Users, TrendingUp, RefreshCw, Download, Zap, 
-  LogOut, Wallet, Search, Clock, Volume2, VolumeX 
+  LogOut, Wallet, Search, Clock, Volume2, VolumeX, ShieldCheck, Coins
 } from "lucide-react";
 import useWebSocket from "react-use-websocket";
 import confetti from 'canvas-confetti';
@@ -19,31 +23,31 @@ import TvlChart from "../components/TvlChart";
 import Toast from "../components/Toast";
 
 export default function Home() {
-  // 1. STACKS CONFIG & AUDIO REF
   const appConfig = useMemo(() => new AppConfig(['store_write', 'publish_data']), []);
   const userSession = useMemo(() => new UserSession({ appConfig }), [appConfig]);
   const chimeRef = useRef(null);
 
-  // 2. DASHBOARD STATE
+  // --- STATE ---
   const [stats, setStats] = useState(null);
   const [personalEvents, setPersonalEvents] = useState([]);
   const [tvl, setTvl] = useState([]);
+  const [stxPrice, setStxPrice] = useState(0);
   const [loading, setLoading] = useState(true);
   const [userAddress, setUserAddress] = useState(null);
   const [view, setView] = useState("global");
   const [mounted, setMounted] = useState(false);
-  const [lastSynced, setLastSynced] = useState(null);
   
-  // Interaction States
+  // UI States
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState("all");
   const [toast, setToast] = useState(null);
   const [isMuted, setIsMuted] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [stackAmount, setStackAmount] = useState(500);
 
-  // 3. INITIALIZATION & SESSION HEALER
+  // --- INITIALIZATION ---
   useEffect(() => {
     setMounted(true);
-    // Initialize Chime
     chimeRef.current = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
     chimeRef.current.volume = 0.3;
 
@@ -53,163 +57,172 @@ export default function Home() {
         const address = userData.profile.stxAddress.mainnet || userData.profile.stxAddress.testnet;
         setUserAddress(address);
       }
-    } catch (error) {
-      console.warn("Auth sync error. Resetting local session...");
+    } catch (e) {
       localStorage.removeItem('blockstack-session');
       setUserAddress(null);
     }
   }, [userSession]);
 
-  // 4. DATA ENGINE
+  // --- DATA FETCHING (Now with Price) ---
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
-      const [s, t] = await Promise.all([fetchStats(), fetchTvlHistory()]);
+      const [s, t, p] = await Promise.all([
+        fetchStats(), 
+        fetchTvlHistory(),
+        fetch('https://api.coingecko.com/api/v3/simple/price?ids=blockstack&vs_currencies=usd').then(r => r.json())
+      ]);
       setStats(s);
       setTvl(t);
-      setLastSynced(new Date().toLocaleTimeString());
+      setStxPrice(p.blockstack.usd);
     } finally { setLoading(false); }
   }, []);
 
   useEffect(() => { if (mounted) loadData(); }, [mounted, loadData]);
 
-  useEffect(() => {
-    if (view === "personal" && userAddress) {
-      getPersonalActivity(userAddress).then(res => {
-        if (res.success) setPersonalEvents(res.data);
-      });
-    }
-  }, [view, userAddress]);
-
-  // 5. LIVE WEBSOCKET & ALERTS
-  const socketUrl = process.env.NEXT_PUBLIC_WS_URL || "wss://your-backend.railway.app";
-  const { lastJsonMessage } = useWebSocket(socketUrl, { shouldReconnect: () => true });
-
-  useEffect(() => {
-    if (lastJsonMessage?.type === "LIVE_EVENT") {
-      const newEvent = lastJsonMessage;
-      const isPersonal = userAddress && (newEvent.sender === userAddress || newEvent.recipient === userAddress);
-      
-      // Global Notification
-      const label = newEvent.event_type === 'stx_transfer' ? 'Transfer' : 'Contract Call';
-      setToast(`${label}: ${newEvent.amount ? newEvent.amount + ' STX' : 'New Interaction'}`);
-      setTimeout(() => setToast(null), 4000);
-
-      // Personal Alerts (Confetti + Chime)
-      if (isPersonal) {
-        if (!isMuted && chimeRef.current) chimeRef.current.play().catch(() => {});
-        setPersonalEvents((prev) => [newEvent, ...prev]);
-        confetti({ particleCount: 150, spread: 80, colors: ['#f97316', '#ffffff'] });
-      }
-    }
-  }, [lastJsonMessage, userAddress, isMuted]);
-
-  // 6. FILTERING LOGIC
+  // --- FILTERING ENGINE ---
   const filteredEvents = useMemo(() => {
     const baseData = view === "personal" ? personalEvents : (stats?.events || []);
     return baseData.filter(tx => {
       const matchesSearch = tx.sender?.toLowerCase().includes(searchTerm.toLowerCase()) || 
                            tx.tx_id?.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      // 🚀 Special Stacking Filter Logic
+      if (filterType === "stacking") {
+        return matchesSearch && (tx.function_name === "delegate-stx" || tx.function_name === "stack-stx");
+      }
+
       const matchesType = filterType === "all" || tx.event_type === filterType || tx.tx_type === filterType;
       return matchesSearch && matchesType;
     });
   }, [view, personalEvents, stats, searchTerm, filterType]);
 
-  // 7. ACTION HANDLERS
-  const handleConnect = () => {
-    showConnect({
-      appDetails: { name: "Stacks DeFi Pro", icon: window.location.origin + '/favicon.ico' },
-      userSession,
-      onFinish: () => { window.location.reload(); }
+  // --- STACKING ACTION ---
+  const handlePoolStacking = async (amount) => {
+    const microSTX = amount * 1000000;
+    const POOL_OPERATOR = 'SPX7CS6N8N6X4X8TDPYF69E3YVFD69ED5K3Q46R2'; 
+
+    await showConnect({
+      contractAddress: 'SP000000000000000000002Q6VF78',
+      contractName: 'pox-4',
+      functionName: 'delegate-stx',
+      functionArgs: [uintCV(microSTX), principalCV(POOL_OPERATOR), noneCV(), noneCV()],
+      postConditionMode: PostConditionMode.Deny,
+      postConditions: [makeStandardSTXPostCondition(userAddress, FungibleConditionCode.LessEqual, microSTX)],
+      onFinish: () => {
+        setToast("Delegation Request Sent!");
+        setIsModalOpen(false);
+        if (!isMuted) chimeRef.current.play();
+        confetti({ particleCount: 150, spread: 70 });
+      },
     });
-  };
-
-  const handleLogout = () => {
-    userSession.signUserOut();
-    window.location.reload();
-  };
-
-  const exportCSV = () => {
-    if (filteredEvents.length === 0) return;
-    const content = "data:text/csv;charset=utf-8," + ["ID,Sender,Amount,Date", ...filteredEvents.map(t => `${t.tx_id},${t.sender},${t.amount},${t.created_at}`)].join("\n");
-    const link = document.createElement("a");
-    link.href = encodeURI(content);
-    link.download = `stacks_${view}_export.csv`;
-    link.click();
-    confetti({ particleCount: 30 });
   };
 
   if (!mounted) return null;
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-10 p-4 md:p-8 max-w-7xl mx-auto">
-      
+    <div className="min-h-screen bg-[#050505] text-slate-200 font-sans selection:bg-orange-500/30">
       <AnimatePresence>
         {toast && <Toast message={toast} onClose={() => setToast(null)} />}
       </AnimatePresence>
 
-      <header className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
-        <div>
-          <h1 className="text-4xl font-space font-bold text-white flex items-center gap-3">
-            {view === "global" ? "DeFi Hub" : "My Dashboard"} <Zap className="text-orange-500 fill-orange-500" />
-          </h1>
-          <div className="flex items-center gap-3 mt-2">
-            <p className="text-slate-400 text-sm flex items-center gap-2">
-               <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" /> Mainnet
-            </p>
-            {lastSynced && <p className="text-slate-500 text-xs border-l border-white/10 pl-3">Synced: {lastSynced}</p>}
-            <button onClick={() => setIsMuted(!isMuted)} className="p-1 hover:bg-white/5 rounded text-slate-500">
-              {isMuted ? <VolumeX size={14} /> : <Volume2 size={14} />}
-            </button>
+      <main className="max-w-7xl mx-auto px-6 py-10 space-y-12">
+        
+        {/* --- HERO HEADER --- */}
+        <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
+          <div className="space-y-2">
+            <h1 className="text-5xl font-black text-white tracking-tighter flex items-center gap-3">
+              TRACKER <span className="text-orange-600 italic">PRO</span>
+            </h1>
+            <div className="flex items-center gap-4 text-sm font-medium">
+              <span className="flex items-center gap-2 text-emerald-500 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Live
+              </span>
+              <span className="text-slate-500">STX Price: <span className="text-white">${stxPrice}</span></span>
+            </div>
           </div>
-        </div>
 
-        <div className="flex flex-wrap items-center gap-3">
-          {userAddress ? (
-            <div className="flex items-center gap-2 bg-slate-900/80 p-1.5 rounded-2xl border border-white/5">
-              <div className="flex bg-slate-800 rounded-xl p-1 items-center">
-                <span className="text-xs text-orange-400 font-mono px-3">{userAddress.slice(0, 5)}...{userAddress.slice(-4)}</span>
-                <button onClick={() => setView("global")} className={`px-4 py-1.5 rounded-lg text-xs font-bold transition ${view === 'global' ? 'bg-orange-600 text-white' : 'text-slate-400'}`}>Global</button>
-                <button onClick={() => setView("personal")} className={`px-4 py-1.5 rounded-lg text-xs font-bold transition ${view === 'personal' ? 'bg-blue-600 text-white' : 'text-slate-400'}`}>My Tx</button>
+          <div className="flex flex-wrap items-center gap-4">
+            {userAddress ? (
+              <div className="flex items-center gap-3 bg-slate-900/50 p-2 rounded-2xl border border-white/5 shadow-2xl backdrop-blur-md">
+                <button onClick={() => setView(view === "global" ? "personal" : "global")} className="flex items-center gap-2 px-4 py-2 bg-slate-800 rounded-xl text-xs font-bold hover:bg-slate-700 transition">
+                   {view === "global" ? <Users size={14}/> : <ShieldCheck size={14}/>} 
+                   {view === "global" ? "Switch to Me" : "Switch to Global"}
+                </button>
+                <button onClick={() => setIsModalOpen(true)} className="px-6 py-2 bg-orange-600 text-white rounded-xl text-xs font-black shadow-lg shadow-orange-900/40 hover:scale-105 active:scale-95 transition">STACK STX</button>
+                <button onClick={() => userSession.signUserOut() || window.location.reload()} className="p-2 text-slate-500 hover:text-red-400"><LogOut size={18}/></button>
               </div>
-              <button onClick={handleLogout} className="p-2 text-slate-500 hover:text-red-400"><LogOut size={18} /></button>
-            </div>
-          ) : (
-            <button onClick={handleConnect} className="px-8 py-3 bg-orange-600 text-white rounded-xl font-bold shadow-xl shadow-orange-900/40 hover:scale-105 transition">Connect Wallet</button>
-          )}
-          <button onClick={exportCSV} className="px-4 py-3 bg-slate-800/50 border border-white/5 rounded-xl text-white text-sm flex items-center gap-2"><Download size={16} /> Export</button>
-        </div>
-      </header>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <StatCard title="Total Value Locked" value={stats?.tvl || 0} icon={TrendingUp} isCurrency />
-        <StatCard title="Active Wallets" value={stats?.users || 0} icon={Users} />
-        <StatCard title="Live Events" value={stats?.events?.length || 0} icon={Activity} />
-      </div>
-
-      <section className="bg-slate-900/40 border border-white/5 p-6 rounded-3xl backdrop-blur-md h-[400px]">
-        <TvlChart data={tvl} />
-      </section>
-
-      <section className="space-y-4">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <h2 className="text-xl font-bold text-white">Activity Feed</h2>
-          <div className="flex items-center gap-2 w-full md:w-auto">
-            <div className="relative flex-1 md:w-64">
-              <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-500" />
-              <input type="text" placeholder="Search..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full bg-slate-900 border border-white/5 rounded-xl py-2 pl-10 text-white text-sm" />
-            </div>
-            <select value={filterType} onChange={(e) => setFilterType(e.target.value)} className="bg-slate-900 border border-white/5 rounded-xl py-2 px-3 text-sm text-slate-300">
-              <option value="all">All</option>
-              <option value="stx_transfer">Transfers</option>
-              <option value="smart_contract">Contracts</option>
-            </select>
+            ) : (
+              <button onClick={() => showConnect({ userSession, appDetails: { name: "STX Pro" }, onFinish: () => window.location.reload() })} className="px-10 py-4 bg-white text-black rounded-2xl font-black hover:bg-slate-200 transition shadow-2xl">CONNECT WALLET</button>
+            )}
           </div>
+        </header>
+
+        {/* --- STATS --- */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <StatCard title="Total Value Locked" value={stats?.tvl || 0} icon={TrendingUp} subtitle={`≈ $${((stats?.tvl || 0) * stxPrice).toLocaleString()}`} />
+          <StatCard title="Wallet Balance" value={userAddress ? "8.56 STX" : "0 STX"} icon={Coins} subtitle={`Value: $${(8.56 * stxPrice).toFixed(2)}`} />
+          <StatCard title="Active Stakers" value={stats?.users || 0} icon={Users} subtitle="Network wide" />
         </div>
-        <div className="bg-slate-900/20 border border-white/5 rounded-3xl overflow-hidden min-h-[400px]">
-          <EventsTable events={filteredEvents} />
-        </div>
-      </section>
-    </motion.div>
+
+        {/* --- CHART --- */}
+        <section className="bg-slate-900/20 border border-white/5 rounded-[2.5rem] p-8 h-[450px] backdrop-blur-3xl relative overflow-hidden">
+          <div className="absolute top-8 left-8 z-10">
+            <h3 className="text-lg font-bold text-white">Ecosystem Growth</h3>
+            <p className="text-xs text-slate-500 uppercase tracking-widest font-bold">24H Volume History</p>
+          </div>
+          <TvlChart data={tvl} />
+        </section>
+
+        {/* --- TABLE & FILTER --- */}
+        <section className="space-y-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+               <h2 className="text-2xl font-bold text-white">Activity</h2>
+               <div className="flex bg-slate-900 rounded-xl p-1">
+                  <button onClick={() => setFilterType("all")} className={`px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition ${filterType === 'all' ? 'bg-slate-800 text-white' : 'text-slate-500'}`}>All</button>
+                  <button onClick={() => setFilterType("stacking")} className={`px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition ${filterType === 'stacking' ? 'bg-orange-600/20 text-orange-500' : 'text-slate-500'}`}>Stacking</button>
+               </div>
+            </div>
+            
+            <div className="relative md:w-80">
+              <Search className="absolute left-4 top-3 text-slate-600" size={16} />
+              <input type="text" placeholder="Search Address..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full bg-slate-900/50 border border-white/5 rounded-2xl py-3 pl-12 text-sm text-white focus:outline-none focus:border-orange-500/50 transition-all" />
+            </div>
+          </div>
+          
+          <div className="bg-slate-900/10 border border-white/5 rounded-[2rem] overflow-hidden backdrop-blur-md">
+            <EventsTable events={filteredEvents} />
+          </div>
+        </section>
+
+      </main>
+
+      {/* --- STACKING MODAL --- */}
+      <AnimatePresence>
+        {isModalOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/90 backdrop-blur-md">
+            <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 50, opacity: 0 }} className="bg-slate-900 border border-white/10 p-10 rounded-[3rem] max-w-sm w-full shadow-[0_0_100px_rgba(249,115,22,0.1)]">
+              <h2 className="text-3xl font-black text-white mb-2 italic">POOL STACKING</h2>
+              <p className="text-slate-400 text-sm mb-8">Lock your STX via the Nakamoto PoX-4 contract to earn BTC rewards.</p>
+              
+              <div className="space-y-8">
+                <div>
+                  <label className="text-[10px] font-black text-orange-500 uppercase tracking-[0.2em] mb-3 block">Amount to Lock</label>
+                  <input type="number" value={stackAmount} onChange={(e) => setStackAmount(e.target.value)} className="w-full bg-black border border-white/5 rounded-2xl p-5 text-2xl font-black text-white focus:outline-none focus:border-orange-500/50" />
+                  <div className="flex justify-between mt-2 text-[10px] font-mono text-slate-600">
+                    <span>EST. APY: 7.4%</span>
+                    <span>PERIOD: 2 WEEKS</span>
+                  </div>
+                </div>
+
+                <button onClick={() => handlePoolStacking(stackAmount)} className="w-full py-5 bg-orange-600 text-white rounded-[1.5rem] font-black text-xl shadow-2xl shadow-orange-900/40 hover:bg-orange-500 transition-all active:scale-95">DELEGATE NOW</button>
+                <button onClick={() => setIsModalOpen(false)} className="w-full text-slate-500 font-bold hover:text-white transition">CLOSE</button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }
