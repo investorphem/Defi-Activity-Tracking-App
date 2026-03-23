@@ -9,7 +9,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Activity, Users, TrendingUp, RefreshCw, Download, Zap, 
-  LogOut, Wallet, Search, Clock, Volume2, VolumeX, ShieldCheck, Coins
+  LogOut, Wallet, Search, Clock, Volume2, VolumeX, ShieldCheck, Coins, FileJson
 } from "lucide-react";
 import useWebSocket from "react-use-websocket";
 import confetti from 'canvas-confetti';
@@ -32,6 +32,7 @@ export default function Home() {
   const [personalEvents, setPersonalEvents] = useState([]);
   const [tvl, setTvl] = useState([]);
   const [stxPrice, setStxPrice] = useState(0);
+  const [balance, setBalance] = useState(0); // 🚀 DYNAMIC BALANCE
   const [loading, setLoading] = useState(true);
   const [userAddress, setUserAddress] = useState(null);
   const [view, setView] = useState("global");
@@ -45,25 +46,31 @@ export default function Home() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [stackAmount, setStackAmount] = useState(500);
 
-  // --- INITIALIZATION ---
+  // --- 1. DYNAMIC BALANCE FETCH ---
+  const fetchBalance = useCallback(async (address) => {
+    if (!address) return;
+    try {
+      const res = await fetch(`https://api.mainnet.hiro.so/extended/v1/address/${address}/balances`);
+      const data = await res.json();
+      setBalance(parseInt(data.stx.balance) / 1000000); // Convert micro-STX
+    } catch (e) { console.error("Balance Fetch Failed", e); }
+  }, []);
+
+  // --- 2. INITIALIZATION ---
   useEffect(() => {
     setMounted(true);
     chimeRef.current = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
     chimeRef.current.volume = 0.3;
 
-    try {
-      if (userSession.isUserSignedIn()) {
-        const userData = userSession.loadUserData();
-        const address = userData.profile.stxAddress.mainnet || userData.profile.stxAddress.testnet;
-        setUserAddress(address);
-      }
-    } catch (e) {
-      localStorage.removeItem('blockstack-session');
-      setUserAddress(null);
+    if (userSession.isUserSignedIn()) {
+      const userData = userSession.loadUserData();
+      const addr = userData.profile.stxAddress.mainnet || userData.profile.stxAddress.testnet;
+      setUserAddress(addr);
+      fetchBalance(addr);
     }
-  }, [userSession]);
+  }, [userSession, fetchBalance]);
 
-  // --- DATA FETCHING (Now with Price) ---
+  // --- 3. DATA ENGINE ---
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
@@ -80,43 +87,33 @@ export default function Home() {
 
   useEffect(() => { if (mounted) loadData(); }, [mounted, loadData]);
 
-  // --- FILTERING ENGINE ---
+  // --- 4. EXPORT LOGIC ---
+  const handleExport = (format) => {
+    if (filteredEvents.length === 0) return;
+    const content = format === 'csv' 
+      ? ["ID,Sender,Amount,Date", ...filteredEvents.map(t => `${t.tx_id},${t.sender},${t.amount},${t.created_at}`)].join("\n")
+      : JSON.stringify(filteredEvents, null, 2);
+    
+    const uri = `data:text/${format};charset=utf-8,` + encodeURI(content);
+    const link = document.createElement("a");
+    link.href = uri;
+    link.download = `stacks_activity.${format}`;
+    link.click();
+    confetti({ particleCount: 50, colors: ['#f97316'] });
+  };
+
+  // --- 5. FILTERING ENGINE ---
   const filteredEvents = useMemo(() => {
     const baseData = view === "personal" ? personalEvents : (stats?.events || []);
     return baseData.filter(tx => {
       const matchesSearch = tx.sender?.toLowerCase().includes(searchTerm.toLowerCase()) || 
                            tx.tx_id?.toLowerCase().includes(searchTerm.toLowerCase());
-      
-      // 🚀 Special Stacking Filter Logic
       if (filterType === "stacking") {
         return matchesSearch && (tx.function_name === "delegate-stx" || tx.function_name === "stack-stx");
       }
-
-      const matchesType = filterType === "all" || tx.event_type === filterType || tx.tx_type === filterType;
-      return matchesSearch && matchesType;
+      return matchesSearch && (filterType === "all" || tx.event_type === filterType);
     });
   }, [view, personalEvents, stats, searchTerm, filterType]);
-
-  // --- STACKING ACTION ---
-  const handlePoolStacking = async (amount) => {
-    const microSTX = amount * 1000000;
-    const POOL_OPERATOR = 'SPX7CS6N8N6X4X8TDPYF69E3YVFD69ED5K3Q46R2'; 
-
-    await showConnect({
-      contractAddress: 'SP000000000000000000002Q6VF78',
-      contractName: 'pox-4',
-      functionName: 'delegate-stx',
-      functionArgs: [uintCV(microSTX), principalCV(POOL_OPERATOR), noneCV(), noneCV()],
-      postConditionMode: PostConditionMode.Deny,
-      postConditions: [makeStandardSTXPostCondition(userAddress, FungibleConditionCode.LessEqual, microSTX)],
-      onFinish: () => {
-        setToast("Delegation Request Sent!");
-        setIsModalOpen(false);
-        if (!isMuted) chimeRef.current.play();
-        confetti({ particleCount: 150, spread: 70 });
-      },
-    });
-  };
 
   if (!mounted) return null;
 
@@ -128,96 +125,91 @@ export default function Home() {
 
       <main className="max-w-7xl mx-auto px-6 py-10 space-y-12">
         
-        {/* --- HERO HEADER --- */}
+        {/* --- HEADER --- */}
         <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
           <div className="space-y-2">
             <h1 className="text-5xl font-black text-white tracking-tighter flex items-center gap-3">
               TRACKER <span className="text-orange-600 italic">PRO</span>
             </h1>
-            <div className="flex items-center gap-4 text-sm font-medium">
-              <span className="flex items-center gap-2 text-emerald-500 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
-                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Live
-              </span>
-              <span className="text-slate-500">STX Price: <span className="text-white">${stxPrice}</span></span>
+            <div className="flex items-center gap-4 text-sm">
+              <span className="text-slate-500">STX Price: <span className="text-white font-bold">${stxPrice}</span></span>
+              <button onClick={() => fetchBalance(userAddress)} className="text-orange-500 hover:rotate-180 transition-all duration-500"><RefreshCw size={14}/></button>
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-4">
+          <div className="flex flex-wrap items-center gap-3 bg-slate-900/40 p-2 rounded-2xl border border-white/5 backdrop-blur-md">
             {userAddress ? (
-              <div className="flex items-center gap-3 bg-slate-900/50 p-2 rounded-2xl border border-white/5 shadow-2xl backdrop-blur-md">
-                <button onClick={() => setView(view === "global" ? "personal" : "global")} className="flex items-center gap-2 px-4 py-2 bg-slate-800 rounded-xl text-xs font-bold hover:bg-slate-700 transition">
-                   {view === "global" ? <Users size={14}/> : <ShieldCheck size={14}/>} 
-                   {view === "global" ? "Switch to Me" : "Switch to Global"}
-                </button>
-                <button onClick={() => setIsModalOpen(true)} className="px-6 py-2 bg-orange-600 text-white rounded-xl text-xs font-black shadow-lg shadow-orange-900/40 hover:scale-105 active:scale-95 transition">STACK STX</button>
-                <button onClick={() => userSession.signUserOut() || window.location.reload()} className="p-2 text-slate-500 hover:text-red-400"><LogOut size={18}/></button>
-              </div>
+              <>
+                <div className="flex bg-black/40 rounded-xl p-1">
+                  <button onClick={() => setView("global")} className={`px-4 py-2 rounded-lg text-[10px] font-bold uppercase transition ${view === 'global' ? 'bg-orange-600 text-white' : 'text-slate-500'}`}>Global</button>
+                  <button onClick={() => setView("personal")} className={`px-4 py-2 rounded-lg text-[10px] font-bold uppercase transition ${view === 'personal' ? 'bg-blue-600 text-white' : 'text-slate-500'}`}>My Activity</button>
+                </div>
+                <button onClick={() => setIsModalOpen(true)} className="px-5 py-2 bg-white text-black rounded-xl text-[10px] font-black hover:scale-105 transition">STACK STX</button>
+                <button onClick={() => { userSession.signUserOut(); window.location.reload(); }} className="p-2 text-slate-500 hover:text-red-400 transition"><LogOut size={18}/></button>
+              </>
             ) : (
-              <button onClick={() => showConnect({ userSession, appDetails: { name: "STX Pro" }, onFinish: () => window.location.reload() })} className="px-10 py-4 bg-white text-black rounded-2xl font-black hover:bg-slate-200 transition shadow-2xl">CONNECT WALLET</button>
+              <button onClick={() => showConnect({ userSession, appDetails: { name: "STX Pro" }, onFinish: () => window.location.reload() })} className="px-8 py-3 bg-white text-black rounded-xl font-black hover:bg-slate-200 transition">CONNECT WALLET</button>
             )}
           </div>
         </header>
 
-        {/* --- STATS --- */}
+        {/* --- STATS GRID --- */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <StatCard title="Total Value Locked" value={stats?.tvl || 0} icon={TrendingUp} subtitle={`≈ $${((stats?.tvl || 0) * stxPrice).toLocaleString()}`} />
-          <StatCard title="Wallet Balance" value={userAddress ? "8.56 STX" : "0 STX"} icon={Coins} subtitle={`Value: $${(8.56 * stxPrice).toFixed(2)}`} />
-          <StatCard title="Active Stakers" value={stats?.users || 0} icon={Users} subtitle="Network wide" />
+          <StatCard title="Your STX Balance" value={userAddress ? `${balance.toFixed(2)} STX` : "---"} icon={Coins} subtitle={`Value: $${(balance * stxPrice).toFixed(2)}`} />
+          <StatCard title="Global Stakers" value={stats?.users || 0} icon={Users} subtitle="Active Wallets" />
         </div>
 
-        {/* --- CHART --- */}
-        <section className="bg-slate-900/20 border border-white/5 rounded-[2.5rem] p-8 h-[450px] backdrop-blur-3xl relative overflow-hidden">
-          <div className="absolute top-8 left-8 z-10">
-            <h3 className="text-lg font-bold text-white">Ecosystem Growth</h3>
-            <p className="text-xs text-slate-500 uppercase tracking-widest font-bold">24H Volume History</p>
-          </div>
-          <TvlChart data={tvl} />
-        </section>
+        {/* --- EXPORT & FILTER TAB --- */}
+        <section className="bg-slate-900/20 border border-white/5 rounded-[2rem] p-6 backdrop-blur-md">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+            <div className="flex items-center gap-2 bg-black/40 p-1.5 rounded-2xl border border-white/5">
+              {['all', 'stx_transfer', 'stacking'].map((type) => (
+                <button 
+                  key={type}
+                  onClick={() => setFilterType(type)}
+                  className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${filterType === type ? 'bg-orange-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
+                >
+                  {type.replace('_', ' ')}
+                </button>
+              ))}
+            </div>
 
-        {/* --- TABLE & FILTER --- */}
-        <section className="space-y-6">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-               <h2 className="text-2xl font-bold text-white">Activity</h2>
-               <div className="flex bg-slate-900 rounded-xl p-1">
-                  <button onClick={() => setFilterType("all")} className={`px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition ${filterType === 'all' ? 'bg-slate-800 text-white' : 'text-slate-500'}`}>All</button>
-                  <button onClick={() => setFilterType("stacking")} className={`px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition ${filterType === 'stacking' ? 'bg-orange-600/20 text-orange-500' : 'text-slate-500'}`}>Stacking</button>
-               </div>
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <Search className="absolute left-4 top-3 text-slate-600" size={16} />
+                <input type="text" placeholder="Filter address..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="bg-black/40 border border-white/5 rounded-2xl py-3 pl-12 pr-4 text-xs text-white focus:outline-none focus:border-orange-500/30 w-48 lg:w-64" />
+              </div>
+              <div className="h-10 w-[1px] bg-white/10 mx-2" />
+              <button onClick={() => handleExport('csv')} className="p-3 bg-slate-800/50 hover:bg-slate-700 rounded-xl text-slate-300 transition" title="Export CSV"><Download size={18}/></button>
+              <button onClick={() => handleExport('json')} className="p-3 bg-slate-800/50 hover:bg-slate-700 rounded-xl text-slate-300 transition" title="Export JSON"><FileJson size={18}/></button>
             </div>
-            
-            <div className="relative md:w-80">
-              <Search className="absolute left-4 top-3 text-slate-600" size={16} />
-              <input type="text" placeholder="Search Address..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full bg-slate-900/50 border border-white/5 rounded-2xl py-3 pl-12 text-sm text-white focus:outline-none focus:border-orange-500/50 transition-all" />
-            </div>
-          </div>
-          
-          <div className="bg-slate-900/10 border border-white/5 rounded-[2rem] overflow-hidden backdrop-blur-md">
-            <EventsTable events={filteredEvents} />
           </div>
         </section>
 
+        {/* --- TABLE --- */}
+        <div className="bg-slate-900/10 border border-white/5 rounded-[2.5rem] overflow-hidden backdrop-blur-xl">
+          <EventsTable events={filteredEvents} />
+        </div>
       </main>
 
       {/* --- STACKING MODAL --- */}
       <AnimatePresence>
         {isModalOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/90 backdrop-blur-md">
-            <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 50, opacity: 0 }} className="bg-slate-900 border border-white/10 p-10 rounded-[3rem] max-w-sm w-full shadow-[0_0_100px_rgba(249,115,22,0.1)]">
-              <h2 className="text-3xl font-black text-white mb-2 italic">POOL STACKING</h2>
-              <p className="text-slate-400 text-sm mb-8">Lock your STX via the Nakamoto PoX-4 contract to earn BTC rewards.</p>
-              
-              <div className="space-y-8">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/95 backdrop-blur-xl">
+            <motion.div initial={{ y: 100, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 100, opacity: 0 }} className="bg-[#0a0a0a] border border-white/10 p-10 rounded-[3rem] max-w-sm w-full shadow-[0_0_80px_rgba(249,115,22,0.15)]">
+              <h2 className="text-3xl font-black text-white mb-6 italic tracking-tighter">DELEGATE STX</h2>
+              <div className="space-y-6">
                 <div>
-                  <label className="text-[10px] font-black text-orange-500 uppercase tracking-[0.2em] mb-3 block">Amount to Lock</label>
-                  <input type="number" value={stackAmount} onChange={(e) => setStackAmount(e.target.value)} className="w-full bg-black border border-white/5 rounded-2xl p-5 text-2xl font-black text-white focus:outline-none focus:border-orange-500/50" />
-                  <div className="flex justify-between mt-2 text-[10px] font-mono text-slate-600">
-                    <span>EST. APY: 7.4%</span>
-                    <span>PERIOD: 2 WEEKS</span>
-                  </div>
+                  <label className="text-[10px] font-black text-orange-500 uppercase tracking-widest mb-3 block">Amount to Pool</label>
+                  <input type="number" value={stackAmount} onChange={(e) => setStackAmount(e.target.value)} className="w-full bg-black border border-white/10 rounded-2xl p-5 text-2xl font-black text-white focus:border-orange-500 transition-all" />
                 </div>
-
-                <button onClick={() => handlePoolStacking(stackAmount)} className="w-full py-5 bg-orange-600 text-white rounded-[1.5rem] font-black text-xl shadow-2xl shadow-orange-900/40 hover:bg-orange-500 transition-all active:scale-95">DELEGATE NOW</button>
-                <button onClick={() => setIsModalOpen(false)} className="w-full text-slate-500 font-bold hover:text-white transition">CLOSE</button>
+                <div className="p-4 bg-orange-500/5 rounded-2xl border border-orange-500/10 space-y-2">
+                  <div className="flex justify-between text-[10px] font-bold"><span className="text-slate-500">REWARD CURRENCY</span><span className="text-white">BITCOIN (BTC)</span></div>
+                  <div className="flex justify-between text-[10px] font-bold"><span className="text-slate-500">MINIMUM LOCK</span><span className="text-white">~2 WEEKS</span></div>
+                </div>
+                <button onClick={() => handlePoolStacking(stackAmount)} className="w-full py-5 bg-orange-600 text-white rounded-2xl font-black text-xl hover:bg-orange-500 transition-all shadow-xl shadow-orange-900/40">CONFIRM & DELEGATE</button>
+                <button onClick={() => setIsModalOpen(false)} className="w-full text-slate-600 font-bold hover:text-white transition">CANCEL</button>
               </div>
             </motion.div>
           </div>
