@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Activity, Users, TrendingUp, RefreshCw, Download, Zap, LogOut, Wallet } from "lucide-react";
+import { Activity, Users, TrendingUp, RefreshCw, Download, Zap, LogOut, Wallet, CheckCircle2 } from "lucide-react";
 import useWebSocket from "react-use-websocket";
 import confetti from 'canvas-confetti';
 import { fetchStats, fetchTvlHistory } from "../lib/api";
@@ -20,8 +20,9 @@ export default function Home() {
   const [userAddress, setUserAddress] = useState(null);
   const [view, setView] = useState("global");
   const [mounted, setMounted] = useState(false);
+  const [showToast, setShowToast] = useState(false);
 
-  // --- 1. HYDRATION GUARD & SESSION RECOVERY ---
+  // --- 1. MOUNT & SESSION RECOVERY ---
   useEffect(() => {
     setMounted(true);
     if (isConnected()) {
@@ -31,7 +32,7 @@ export default function Home() {
     }
   }, []);
 
-  // --- 2. LIVE DATA (WEBSOCKET) ---
+  // --- 2. WEBSOCKET SETUP ---
   const socketUrl = process.env.NEXT_PUBLIC_WS_URL || "wss://your-backend.railway.app";
   const { lastJsonMessage } = useWebSocket(socketUrl, {
     shouldReconnect: () => true,
@@ -47,7 +48,6 @@ export default function Home() {
         events: [newEvent, ...prev.events].slice(0, 20),
       } : prev);
 
-      // Trigger celebration if user is the sender/recipient
       if (userAddress && (newEvent.sender === userAddress || newEvent.recipient === userAddress)) {
         setPersonalEvents((prev) => [newEvent, ...prev]);
         confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, colors: ['#f97316', '#ffffff'] });
@@ -55,11 +55,9 @@ export default function Home() {
     }
   }, [lastJsonMessage, userAddress]);
 
-  // --- 3. RESPONSIVE WALLET AUTH ---
+  // --- 3. INSTANT-SYNC AUTHENTICATION ---
   const handleConnect = useCallback(async () => {
-    console.log("Connect button clicked - initiating wallet request");
     try {
-      // Direct async call for 2026 Connect v8+
       const authResponse = await connect({
         appDetails: {
           name: "Stacks DeFi Tracker Pro",
@@ -67,15 +65,17 @@ export default function Home() {
         },
       });
 
-      if (authResponse?.addresses?.stx?.[0]?.address) {
-        const address = authResponse.addresses.stx[0].address;
+      // 🚀 Instant State Update (No Refresh Needed)
+      const address = authResponse?.addresses?.stx?.[0]?.address;
+      if (address) {
         setUserAddress(address);
-        setView("personal");
-        console.log("Connected successfully:", address);
+        setView("personal"); // Auto-switch to personal view
+        setShowToast(true);
+        setTimeout(() => setShowToast(false), 4000);
+        console.log("Instant sync successful:", address);
       }
     } catch (err) {
-      console.error("Connection failed or cancelled:", err);
-      // Fallback if no provider is detected in the browser
+      console.error("Connection failed:", err);
       if (typeof window !== 'undefined' && !window.StacksProvider && !window.leather) {
         alert("Wallet extension not detected. Please install Leather or Xverse.");
       }
@@ -87,10 +87,11 @@ export default function Home() {
     localStorage.clear();
     setUserAddress(null);
     setView("global");
+    // Only refresh on logout to clear all provider states
     window.location.reload();
   }, []);
 
-  // --- 4. INITIAL & PERSONAL DATA FETCH ---
+  // --- 4. DATA FETCHING ---
   useEffect(() => {
     if (!mounted) return;
     async function loadInitialData() {
@@ -100,7 +101,7 @@ export default function Home() {
         setStats(statsData);
         setTvl(tvlData);
       } catch (err) {
-        console.error("Initial load error:", err);
+        console.error("Load error:", err);
       } finally {
         setLoading(false);
       }
@@ -133,7 +134,6 @@ export default function Home() {
     link.click();
   };
 
-  // Prevent hydration flicker
   if (!mounted) return null;
 
   if (loading && !stats) return (
@@ -144,7 +144,21 @@ export default function Home() {
   );
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-10">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-10 relative">
+      
+      {/* 🔔 SUCCESS TOAST */}
+      <AnimatePresence>
+        {showToast && (
+          <motion.div 
+            initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
+            className="fixed top-6 right-6 z-[100] bg-emerald-600 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 border border-emerald-400/50"
+          >
+            <CheckCircle2 className="w-5 h-5" />
+            <span className="font-bold text-sm">Wallet Connected Instantly</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* HEADER */}
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
@@ -175,8 +189,7 @@ export default function Home() {
             </div>
           ) : (
             <button 
-              type="button"
-              onClick={handleConnect}
+              type="button" onClick={handleConnect}
               className="flex items-center gap-2 px-6 py-2 bg-orange-600 hover:bg-orange-500 text-white rounded-lg font-bold transition-all shadow-lg shadow-orange-900/30 active:scale-95 cursor-pointer z-50"
             >
               <Wallet className="w-4 h-4" /> Connect Wallet
@@ -188,21 +201,19 @@ export default function Home() {
         </div>
       </header>
 
-      {/* STATS */}
+      {/* STATS GRID */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <StatCard title="Total Value Locked" value={stats?.tvl || 0} icon={TrendingUp} isCurrency trend={+5.2} />
         <StatCard title="24h Active Users" value={stats?.users || 0} icon={Users} trend={-1.4} />
         <StatCard title="Network Transactions" value={stats?.events?.length || 0} icon={Activity} />
       </div>
 
-      {/* CHART */}
       <section className="bg-slate-900/50 border border-white/10 p-6 rounded-2xl backdrop-blur-sm">
         <div className="h-[350px] w-full">
           <TvlChart data={tvl} />
         </div>
       </section>
 
-      {/* FEED */}
       <section className="space-y-4">
         <div className="flex items-center justify-between px-1">
           <h2 className="text-xl font-space font-bold text-white flex items-center gap-2">
