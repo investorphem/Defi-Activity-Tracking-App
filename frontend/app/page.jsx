@@ -13,7 +13,7 @@ import EventsTable from "../components/EventsTable";
 import TvlChart from "../components/TvlChart";
 
 export default function Home() {
-  // 1. STABLE SESSION CONFIG
+  // 1. STABLE SESSION CONFIG (Crucial for popup stability)
   const appConfig = useMemo(() => new AppConfig(['store_write', 'publish_data']), []);
   const userSession = useMemo(() => new UserSession({ appConfig }), [appConfig]);
 
@@ -26,7 +26,7 @@ export default function Home() {
   const [mounted, setMounted] = useState(false);
   const [showToast, setShowToast] = useState(false);
 
-  // --- 2. MOUNT & SESSION RECOVERY ---
+  // --- 2. SESSION RECOVERY ---
   useEffect(() => {
     setMounted(true);
     if (userSession.isUserSignedIn()) {
@@ -36,23 +36,9 @@ export default function Home() {
     }
   }, [userSession]);
 
-  // --- 3. WEBSOCKET SETUP ---
-  const socketUrl = process.env.NEXT_PUBLIC_WS_URL || "wss://your-backend.railway.app";
-  const { lastJsonMessage } = useWebSocket(socketUrl, { shouldReconnect: () => true });
-
-  useEffect(() => {
-    if (lastJsonMessage?.type === "LIVE_EVENT") {
-      const newEvent = lastJsonMessage;
-      if (userAddress && (newEvent.sender === userAddress || newEvent.recipient === userAddress)) {
-        setPersonalEvents((prev) => [newEvent, ...prev]);
-        confetti({ particleCount: 100, spread: 70 });
-      }
-    }
-  }, [lastJsonMessage, userAddress]);
-
-  // --- 4. THE CONNECTION FIX ---
+  // --- 3. THE CONNECTION HANDLER (Directly fires the popup) ---
   const handleConnect = useCallback(() => {
-    console.log("Connect requested...");
+    console.log("Attempting wallet connection...");
     showConnect({
       appDetails: {
         name: "Stacks DeFi Tracker Pro",
@@ -67,10 +53,10 @@ export default function Home() {
           setView("personal");
           setShowToast(true);
           setTimeout(() => setShowToast(false), 3000);
-          confetti({ particleCount: 150 });
+          confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
         }
       },
-      onCancel: () => console.log("Connection cancelled")
+      onCancel: () => console.log("Connection closed by user")
     });
   }, [userSession]);
 
@@ -78,10 +64,23 @@ export default function Home() {
     userSession.signUserOut();
     setUserAddress(null);
     setView("global");
-    window.location.reload();
+    window.location.reload(); 
   }, [userSession]);
 
-  // --- 5. DATA FETCHING ---
+  // --- 4. WEBSOCKET & DATA ---
+  const socketUrl = process.env.NEXT_PUBLIC_WS_URL || "wss://your-backend.railway.app";
+  const { lastJsonMessage } = useWebSocket(socketUrl, { shouldReconnect: () => true });
+
+  useEffect(() => {
+    if (lastJsonMessage?.type === "LIVE_EVENT") {
+      const newEvent = lastJsonMessage;
+      if (userAddress && (newEvent.sender === userAddress || newEvent.recipient === userAddress)) {
+        setPersonalEvents((prev) => [newEvent, ...prev]);
+        confetti({ particleCount: 50 });
+      }
+    }
+  }, [lastJsonMessage, userAddress]);
+
   useEffect(() => {
     if (!mounted) return;
     async function loadData() {
@@ -117,72 +116,76 @@ export default function Home() {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-10 relative">
       
+      {/* 🔔 FLOATING TOAST */}
       <AnimatePresence>
         {showToast && (
-          <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="fixed top-6 right-6 z-[100] bg-emerald-600 text-white px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3">
-            <CheckCircle2 className="w-5 h-5" /> <span className="font-bold text-sm">Wallet Synced Instantly</span>
+          <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="fixed top-20 right-6 z-[100] bg-emerald-600 text-white px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3">
+            <CheckCircle2 className="w-5 h-5" /> <span className="font-bold text-sm">Wallet Connected</span>
           </motion.div>
         )}
       </AnimatePresence>
 
-      <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+      <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
-          <h1 className="text-4xl font-space font-bold text-white flex items-center gap-3">
-            {view === "global" ? "DeFi Overview" : "My Activity"} <Zap className="w-8 h-8 text-orange-500 fill-orange-500" />
+          <h1 className="text-4xl md:text-5xl font-space font-bold text-white flex items-center gap-3">
+            {view === "global" ? "DeFi Overview" : "My Activity"} 
+            {view === "global" && <Zap className="w-8 h-8 text-orange-500 fill-orange-500" />}
           </h1>
           <p className="text-slate-400 mt-2 flex items-center gap-2">
-            <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" /> Live ecosystem metrics
+            Monitoring Stacks Mainnet Ecosystem
           </p>
         </div>
 
-        {/* --- ACTIONS BAR (Export and Wallet) --- */}
+        {/* 🚀 ACTION BUTTONS (The Fixed Part) */}
         <div className="flex items-center gap-3">
           {userAddress ? (
-            <div className="flex items-center gap-2 bg-slate-900/80 p-1 rounded-xl border border-slate-700">
-              <div className="flex bg-slate-800 rounded-lg p-1">
-                <span className="text-xs text-orange-400 font-mono px-3 self-center">
+            <div className="flex items-center gap-2 bg-slate-900/80 p-1.5 rounded-2xl border border-white/5 shadow-2xl">
+              <div className="flex bg-slate-800 rounded-xl p-1 items-center">
+                <span className="text-xs text-orange-400 font-mono px-3">
                   {userAddress.slice(0, 5)}...{userAddress.slice(-4)}
                 </span>
-                <button onClick={() => setView("global")} className={`px-4 py-1.5 rounded-md text-xs font-bold transition ${view === 'global' ? 'bg-orange-600 text-white shadow-lg' : 'text-slate-400'}`}>Global</button>
-                <button onClick={() => setView("personal")} className={`px-4 py-1.5 rounded-md text-xs font-bold transition ${view === 'personal' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400'}`}>My Tx</button>
+                <button onClick={() => setView("global")} className={`px-4 py-1.5 rounded-lg text-xs font-bold transition ${view === 'global' ? 'bg-orange-600 text-white shadow-lg' : 'text-slate-400'}`}>Global</button>
+                <button onClick={() => setView("personal")} className={`px-4 py-1.5 rounded-lg text-xs font-bold transition ${view === 'personal' ? 'bg-purple-600 text-white shadow-lg' : 'text-slate-400'}`}>My Tx</button>
               </div>
-              <button onClick={handleLogout} className="p-2 text-slate-500 hover:text-red-400"><LogOut className="w-4 h-4" /></button>
+              <button onClick={handleLogout} className="p-2 text-slate-500 hover:text-red-400 transition-colors"><LogOut className="w-4 h-4" /></button>
             </div>
           ) : (
-            <button onClick={handleConnect} className="flex items-center gap-2 px-6 py-2 bg-orange-600 hover:bg-orange-500 text-white rounded-lg font-bold transition active:scale-95">
-              <Wallet className="w-4 h-4" /> Connect Wallet
+            <button 
+              onClick={handleConnect} 
+              className="relative z-10 flex items-center gap-2 px-8 py-3 bg-gradient-to-tr from-orange-600 to-purple-600 text-white rounded-xl font-bold transition-all hover:scale-[1.02] active:scale-95 shadow-xl shadow-orange-500/20 cursor-pointer"
+            >
+              <Wallet className="w-5 h-5" /> Connect Stacks Wallet
             </button>
           )}
           
-          {/* EXPORT BUTTON - RESTORED HERE */}
-          <button onClick={exportToCSV} className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-sm font-medium transition text-white">
+          <button onClick={exportToCSV} className="flex items-center gap-2 px-4 py-3 bg-slate-800/50 hover:bg-slate-700 border border-white/5 rounded-xl text-sm font-medium transition text-white">
             <Download className="w-4 h-4" /> Export
           </button>
         </div>
       </header>
 
+      {/* DASHBOARD GRID */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <StatCard title="Total Value Locked" value={stats?.tvl || 0} icon={TrendingUp} isCurrency />
         <StatCard title="24h Active Users" value={stats?.users || 0} icon={Users} />
-        <StatCard title="Network Transactions" value={stats?.events?.length || 0} icon={Activity} />
+        <StatCard title="Total Transactions" value={stats?.events?.length || 0} icon={Activity} />
       </div>
 
-      <section className="bg-slate-900/50 border border-white/10 p-6 rounded-2xl">
+      <section className="bg-slate-900/40 border border-white/5 p-6 rounded-3xl backdrop-blur-md">
         <div className="h-[350px] w-full"><TvlChart data={tvl} /></div>
       </section>
 
       <section className="space-y-4">
-        <div className="flex items-center justify-between px-1">
+        <div className="flex items-center justify-between px-2">
           <h2 className="text-xl font-space font-bold text-white flex items-center gap-2">
-            {view === "global" ? "Live Feed" : "Personal History"}
+            {view === "global" ? "Network Activity" : "Your Activity"}
             {loading && <RefreshCw className="w-4 h-4 text-orange-500 animate-spin" />}
           </h2>
-          {/* MONITORING TEXT - RESTORED HERE */}
-          <span className="text-xs text-slate-500 font-mono">
-            {userAddress ? "Connected to Stacks Node" : "Monitoring Network..."}
+          <span className="text-xs text-slate-500 font-mono uppercase tracking-widest">
+            {userAddress ? "Sync Active" : "Scanning..."}
           </span>
         </div>
-        <div className="bg-slate-900/30 border border-white/5 rounded-2xl overflow-hidden min-h-[300px]">
+        <div className="bg-slate-900/20 border border-white/5 rounded-3xl overflow-hidden min-h-[400px]">
           <EventsTable events={view === "personal" ? personalEvents : (stats?.events || [])} />
         </div>
       </section>
