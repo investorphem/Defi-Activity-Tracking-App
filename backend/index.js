@@ -90,6 +90,32 @@ app.get('/api/tvl-history', apiGate, async (req, res) => {
   }
 });
 
+/**
+ * 🚀 NEW: PERSONAL ACTIVITY ROUTE
+ * Gets transactions for a specific connected wallet
+ */
+app.get('/api/my-activity', apiGate, async (req, res) => {
+  const userAddress = req.query.address;
+
+  if (!userAddress) {
+    return res.status(400).json({ error: 'Missing address' });
+  }
+
+  try {
+    const result = await pool.query(
+      `SELECT * FROM defi_events 
+       WHERE sender = $1 
+       ORDER BY created_at DESC 
+       LIMIT 50`, 
+      [userAddress]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error('❌ User Activity Error:', err.message);
+    res.status(500).json({ error: 'Failed to fetch your transactions' });
+  }
+});
+
 // 5. CHAINHOOK WEBHOOK (The Data Ingestion)
 app.post('/webhook/stacks-event', apiGate, async (req, res) => {
   const payload = req.body;
@@ -108,7 +134,7 @@ app.post('/webhook/stacks-event', apiGate, async (req, res) => {
             asset: meta.asset || 'STX',
             block_height: block.block_identifier.index
           };
-          
+
           await pool.query(
             `INSERT INTO defi_events (tx_id, protocol, event_type, sender, amount, asset, block_height)
              VALUES ($1,$2,$3,$4,$5,$6,$7) ON CONFLICT (tx_id) DO NOTHING`,
