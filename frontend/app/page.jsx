@@ -1,18 +1,22 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
+import { AppConfig, UserSession, showConnect } from "@stacks/connect";
 import { motion, AnimatePresence } from "framer-motion";
 import { Activity, Users, TrendingUp, RefreshCw, Download, Zap, LogOut, Wallet, CheckCircle2 } from "lucide-react";
 import useWebSocket from "react-use-websocket";
 import confetti from 'canvas-confetti';
 import { fetchStats, fetchTvlHistory } from "../lib/api";
 import { getPersonalActivity } from "./actions";
-import { isConnected, getLocalStorage, connect, disconnect } from "@stacks/connect";
 import StatCard from "../components/StatCard";
 import EventsTable from "../components/EventsTable";
 import TvlChart from "../components/TvlChart";
 
 export default function Home() {
+  // --- 1. SESSION & STATE SETUP ---
+  const appConfig = useMemo(() => new AppConfig(['store_write', 'publish_data']), []);
+  const userSession = useMemo(() => new UserSession({ appConfig }), [appConfig]);
+
   const [stats, setStats] = useState(null);
   const [personalEvents, setPersonalEvents] = useState([]);
   const [tvl, setTvl] = useState([]);
@@ -22,30 +26,17 @@ export default function Home() {
   const [mounted, setMounted] = useState(false);
   const [showToast, setShowToast] = useState(false);
 
-  // --- 1. THE "NUCLEAR" SYNC (Listens for Popup Changes) ---
+  // --- 2. INITIAL MOUNT & SESSION RECOVERY ---
   useEffect(() => {
     setMounted(true);
+    if (userSession.isUserSignedIn()) {
+      const userData = userSession.loadUserData();
+      const address = userData.profile.stxAddress.mainnet || userData.profile.stxAddress.testnet;
+      setUserAddress(address);
+    }
+  }, [userSession]);
 
-    const syncWalletState = () => {
-      if (isConnected()) {
-        const userData = getLocalStorage();
-        const address = userData?.addresses?.stx?.[0]?.address;
-        if (address) {
-          setUserAddress(address);
-          // If we just connected, default to personal view
-          if (view === "global") setView("personal");
-        }
-      }
-    };
-
-    // Listen for storage events (when the wallet popup writes to localStorage)
-    window.addEventListener("storage", syncWalletState);
-    syncWalletState(); // Run immediately on mount
-
-    return () => window.removeEventListener("storage", syncWalletState);
-  }, [view]);
-
-  // --- 2. WEBSOCKET SETUP ---
+  // --- 3. LIVE WEBSOCKET UPDATES ---
   const socketUrl = process.env.NEXT_PUBLIC_WS_URL || "wss://your-backend.railway.app";
   const { lastJsonMessage } = useWebSocket(socketUrl, {
     shouldReconnect: () => true,
@@ -63,51 +54,44 @@ export default function Home() {
 
       if (userAddress && (newEvent.sender === userAddress || newEvent.recipient === userAddress)) {
         setPersonalEvents((prev) => [newEvent, ...prev]);
-        confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, colors: ['#f97316', '#ffffff'] });
+        confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
       }
     }
   }, [lastJsonMessage, userAddress]);
 
-  // --- 3. UPDATED AUTHENTICATION (With Forced State Injection) ---
-  const handleConnect = useCallback(async () => {
-    try {
-      const authResponse = await connect({
-        appDetails: {
-          name: "Stacks DeFi Tracker Pro",
-          icon: typeof window !== 'undefined' ? `${window.location.origin}/favicon.ico` : "",
-        },
-        onFinish: (payload) => {
-          // Fallback for older browsers/wallets
-          const address = payload?.addresses?.stx?.[0]?.address;
-          if (address) {
-            setUserAddress(address);
-            setView("personal");
-          }
+  // --- 4. INSTANT WALLET CONNECTION (No Refresh) ---
+  const handleConnect = useCallback(() => {
+    showConnect({
+      appDetails: {
+        name: 'Stacks DeFi Tracker Pro',
+        icon: typeof window !== 'undefined' ? window.location.origin + '/favicon.ico' : '',
+      },
+      userSession,
+      onFinish: () => {
+        // 🚀 THE FIX: Instead of reload(), we manually extract and set state
+        const userData = userSession.loadUserData();
+        const address = userData.profile.stxAddress.mainnet || userData.profile.stxAddress.testnet;
+        
+        if (address) {
+          setUserAddress(address);
+          setView("personal"); // Auto-switch view
+          setShowToast(true);
+          setTimeout(() => setShowToast(false), 4000);
+          confetti({ particleCount: 150, spread: 60 });
         }
-      });
-
-      // Direct response handling
-      const address = authResponse?.addresses?.stx?.[0]?.address;
-      if (address) {
-        setUserAddress(address);
-        setView("personal");
-        setShowToast(true);
-        setTimeout(() => setShowToast(false), 3000);
-      }
-    } catch (err) {
-      console.error("Connection error:", err);
-    }
-  }, []);
+      },
+      onCancel: () => console.log("User closed wallet modal")
+    });
+  }, [userSession]);
 
   const handleLogout = useCallback(() => {
-    disconnect();
-    localStorage.clear();
+    userSession.signUserOut();
     setUserAddress(null);
     setView("global");
-    window.location.reload();
-  }, []);
+    window.location.reload(); // Refresh only on logout to clear provider caches
+  }, [userSession]);
 
-  // --- 4. DATA FETCHING ---
+  // --- 5. DATA FETCHING ---
   useEffect(() => {
     if (!mounted) return;
     async function loadInitialData() {
@@ -116,11 +100,7 @@ export default function Home() {
         const [statsData, tvlData] = await Promise.all([fetchStats(), fetchTvlHistory()]);
         setStats(statsData);
         setTvl(tvlData);
-      } catch (err) {
-        console.error("Load error:", err);
-      } finally {
-        setLoading(false);
-      }
+      } finally { setLoading(false); }
     }
     loadInitialData();
   }, [mounted]);
@@ -137,33 +117,20 @@ export default function Home() {
     loadPersonal();
   }, [view, userAddress]);
 
-  const exportToCSV = () => {
-    const dataToExport = view === "personal" ? personalEvents : stats?.events || [];
-    const headers = ["ID", "Type", "Sender", "Amount", "Asset", "Date"];
-    const rows = dataToExport.map(tx => [tx.tx_id, tx.event_type, tx.sender, tx.amount, tx.asset, tx.created_at]);
-    const csvContent = [headers, ...rows].map(e => e.join(",")).join("\n");
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute("download", `stacks_activity_${view}.csv`);
-    link.click();
-  };
-
   if (!mounted) return null;
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-10 relative">
       
-      {/* SUCCESS TOAST */}
+      {/* 🔔 SUCCESS NOTIFICATION */}
       <AnimatePresence>
         {showToast && (
           <motion.div 
             initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
-            className="fixed top-6 right-6 z-[100] bg-emerald-600 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 border border-emerald-400/50"
+            className="fixed top-6 right-6 z-[100] bg-emerald-600 text-white px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3 border border-emerald-400/50"
           >
             <CheckCircle2 className="w-5 h-5" />
-            <span className="font-bold text-sm">Wallet Connected Instantly</span>
+            <span className="font-bold text-sm tracking-wide">Wallet Sync Active</span>
           </motion.div>
         )}
       </AnimatePresence>
@@ -184,11 +151,14 @@ export default function Home() {
         <div className="flex items-center gap-3">
           {userAddress ? (
             <div className="flex items-center gap-2 bg-slate-900/80 p-1 rounded-xl border border-slate-700">
-              <div className="flex bg-slate-800 rounded-lg">
-                <button onClick={() => setView("global")} className={`px-4 py-2 rounded-md text-xs font-bold transition ${view === 'global' ? 'bg-orange-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}>
+              <div className="flex bg-slate-800 rounded-lg p-1 items-center">
+                <span className="text-xs text-orange-400 font-mono px-3">
+                  {userAddress.slice(0, 5)}...{userAddress.slice(-4)}
+                </span>
+                <button onClick={() => setView("global")} className={`px-4 py-1.5 rounded-md text-xs font-bold transition ${view === 'global' ? 'bg-orange-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}>
                   Global
                 </button>
-                <button onClick={() => setView("personal")} className={`px-4 py-2 rounded-md text-xs font-bold transition ${view === 'personal' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}>
+                <button onClick={() => setView("personal")} className={`px-4 py-1.5 rounded-md text-xs font-bold transition ${view === 'personal' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}>
                   My Tx
                 </button>
               </div>
@@ -198,15 +168,12 @@ export default function Home() {
             </div>
           ) : (
             <button 
-              type="button" onClick={handleConnect}
-              className="flex items-center gap-2 px-6 py-2 bg-orange-600 hover:bg-orange-500 text-white rounded-lg font-bold transition-all shadow-lg shadow-orange-900/30 active:scale-95 cursor-pointer z-50"
+              onClick={handleConnect}
+              className="flex items-center gap-2 px-6 py-2 bg-orange-600 hover:bg-orange-500 text-white rounded-lg font-bold transition-all shadow-lg active:scale-95 z-50"
             >
               <Wallet className="w-4 h-4" /> Connect Wallet
             </button>
           )}
-          <button onClick={exportToCSV} className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-sm font-medium transition text-white">
-            <Download className="w-4 h-4" /> Export
-          </button>
         </div>
       </header>
 
@@ -217,22 +184,18 @@ export default function Home() {
         <StatCard title="Network Transactions" value={stats?.events?.length || 0} icon={Activity} />
       </div>
 
+      {/* CHART */}
       <section className="bg-slate-900/50 border border-white/10 p-6 rounded-2xl backdrop-blur-sm">
         <div className="h-[350px] w-full">
           <TvlChart data={tvl} />
         </div>
       </section>
 
+      {/* LIVE FEED */}
       <section className="space-y-4">
-        <div className="flex items-center justify-between px-1">
-          <h2 className="text-xl font-space font-bold text-white flex items-center gap-2">
-            {view === "global" ? "Live Transaction Feed" : "Personal Transaction History"}
-            {loading && <RefreshCw className="w-4 h-4 text-orange-500 animate-spin" />}
-          </h2>
-          <span className="text-xs text-slate-500 font-mono">
-            {userAddress ? `Wallet: ${userAddress.slice(0,6)}...${userAddress.slice(-4)}` : "Monitoring Network..."}
-          </span>
-        </div>
+        <h2 className="text-xl font-space font-bold text-white px-1">
+          {view === "global" ? "Live Transaction Feed" : "Personal Transaction History"}
+        </h2>
         <div className="bg-slate-900/30 border border-white/5 rounded-2xl overflow-hidden backdrop-blur-sm min-h-[300px]">
           <AnimatePresence mode="popLayout">
             <EventsTable events={view === "personal" ? personalEvents : (stats?.events || [])} />
