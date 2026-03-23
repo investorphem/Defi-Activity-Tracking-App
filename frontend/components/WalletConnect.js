@@ -1,75 +1,63 @@
 'use client';
 
-import { AppConfig, UserSession, showConnect } from '@stacks/connect';
-import { useState, useEffect, useMemo } from 'react';
+import { showConnect } from '@stacks/connect';
+import { useState, useEffect } from 'react';
+import { userSession } from '../lib/stacksSession'; // Import from our new file
+import { Wallet, LogOut } from 'lucide-react';
 
 export default function WalletConnect() {
-  // 1. Stable config to prevent re-initialization issues
-  const appConfig = useMemo(() => new AppConfig(['store_write', 'publish_data']), []);
-  const userSession = useMemo(() => new UserSession({ appConfig }), [appConfig]);
-  
   const [userData, setUserData] = useState(null);
 
-  // Check session on mount
   useEffect(() => {
     if (userSession.isUserSignedIn()) {
       setUserData(userSession.loadUserData());
     }
-  }, [userSession]);
+  }, []);
 
-  const connectWallet = () => {
+  const handleConnect = () => {
     showConnect({
       appDetails: {
         name: 'Stacks DeFi Tracker Pro',
-        icon: typeof window !== 'undefined' ? window.location.origin + '/favicon.ico' : '',
+        icon: window.location.origin + '/favicon.ico',
       },
       userSession,
       onFinish: () => {
-        // 🚀 THE FIX: Pull data and update state immediately
-        const freshUserData = userSession.loadUserData();
-        setUserData(freshUserData);
+        // 🚀 THE FIX: Update state instead of reloading
+        const data = userSession.loadUserData();
+        setUserData(data);
         
-        // Optional: Dispatch a custom event if your main page needs to know
-        window.dispatchEvent(new Event('stacks-login'));
+        // Tells the rest of the app the user logged in
+        window.dispatchEvent(new Event('storage')); 
       },
     });
   };
 
-  const disconnect = () => {
+  const handleLogout = () => {
     userSession.signUserOut();
     setUserData(null);
-    // Refresh only on logout to clear all internal provider states
-    window.location.reload(); 
+    window.location.reload();
   };
 
-  const stxAddress = userData?.profile?.stxAddress?.mainnet || userData?.profile?.stxAddress?.testnet;
+  if (userData) {
+    const addr = userData.profile.stxAddress.mainnet;
+    return (
+      <div className="flex items-center gap-2 bg-slate-900/80 p-1 rounded-xl border border-white/5">
+        <span className="text-xs text-orange-400 font-mono px-3">
+          {addr.slice(0, 5)}...{addr.slice(-4)}
+        </span>
+        <button onClick={handleLogout} className="p-2 text-slate-500 hover:text-red-400 transition">
+          <LogOut size={16} />
+        </button>
+      </div>
+    );
+  }
 
   return (
-    <div className="flex items-center gap-4">
-      {!userData ? (
-        <button 
-          onClick={connectWallet}
-          className="bg-orange-600 hover:bg-orange-500 text-white px-5 py-2.5 rounded-xl font-bold transition-all active:scale-95 shadow-lg shadow-orange-900/20"
-        >
-          Connect Stacks Wallet
-        </button>
-      ) : (
-        <div className="flex items-center gap-3 bg-slate-900/50 border border-white/10 p-1.5 rounded-xl">
-          <div className="px-3 py-1">
-             <p className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Connected</p>
-             <span className="text-sm text-orange-400 font-mono font-medium">
-               {stxAddress ? `${stxAddress.substring(0, 5)}...${stxAddress.substring(stxAddress.length - 4)}` : "Wallet Connected"}
-             </span>
-          </div>
-          <button 
-            onClick={disconnect}
-            className="bg-slate-800 hover:bg-red-900/40 hover:text-red-400 text-slate-400 p-2 rounded-lg transition-colors"
-            title="Logout"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-          </button>
-        </div>
-      )}
-    </div>
+    <button 
+      onClick={handleConnect}
+      className="flex items-center gap-2 px-6 py-2 bg-orange-600 hover:bg-orange-500 text-white rounded-lg font-bold transition shadow-lg shadow-orange-900/20"
+    >
+      <Wallet size={16} /> Connect Wallet
+    </button>
   );
 }
