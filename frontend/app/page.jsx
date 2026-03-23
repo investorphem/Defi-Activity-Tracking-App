@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Activity, Users, TrendingUp, AlertCircle, RefreshCw, Download, Zap } from "lucide-react";
 import useWebSocket from "react-use-websocket";
 import { fetchStats, fetchTvlHistory } from "../lib/api";
-import { getPersonalActivity } from "../actions";
+import { getPersonalActivity } from "./actions";
 import { isConnected, getLocalStorage } from "@stacks/connect";
 import StatCard from "../components/StatCard";
 import EventsTable from "../components/EventsTable";
