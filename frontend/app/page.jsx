@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Activity, Users, TrendingUp, RefreshCw, Download, Zap, LogOut, Wallet } from "lucide-react";
 import useWebSocket from "react-use-websocket";
 import confetti from 'canvas-confetti';
 import { fetchStats, fetchTvlHistory } from "../lib/api";
 import { getPersonalActivity } from "./actions";
-import { isConnected, getLocalStorage, showConnect } from "@stacks/connect";
+import { isConnected, getLocalStorage, connect, disconnect } from "@stacks/connect"; // Updated Imports
 import StatCard from "../components/StatCard";
 import EventsTable from "../components/EventsTable";
 import TvlChart from "../components/TvlChart";
@@ -19,9 +19,9 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [userAddress, setUserAddress] = useState(null);
   const [view, setView] = useState("global");
-  const [mounted, setMounted] = useState(false); // Fix for Hydration
+  const [mounted, setMounted] = useState(false);
 
-  // --- 1. MOUNT CHECK (Prevents Hydration Mismatch) ---
+  // --- 1. MOUNT & AUTH CHECK (Prevents Hydration Dead-Zone) ---
   useEffect(() => {
     setMounted(true);
     if (isConnected()) {
@@ -38,58 +38,59 @@ export default function Home() {
   });
 
   useEffect(() => {
-    if (lastJsonMessage && lastJsonMessage.type === "LIVE_EVENT") {
+    if (lastJsonMessage?.type === "LIVE_EVENT") {
       const newEvent = lastJsonMessage;
-      setStats((prev) => {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          tvl: prev.tvl + (newEvent.amount || 0),
-          events: [newEvent, ...prev.events].slice(0, 20),
-        };
-      });
+      setStats((prev) => prev ? {
+        ...prev,
+        tvl: prev.tvl + (newEvent.amount || 0),
+        events: [newEvent, ...prev.events].slice(0, 20),
+      } : prev);
 
-      if (userAddress && newEvent.sender === userAddress) {
+      if (userAddress && (newEvent.sender === userAddress || newEvent.recipient === userAddress)) {
         setPersonalEvents((prev) => [newEvent, ...prev]);
         confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, colors: ['#f97316', '#ffffff'] });
       }
     }
   }, [lastJsonMessage, userAddress]);
 
-  // --- 3. UPDATED AUTHENTICATION (More Responsive) ---
-  const handleConnect = async () => {
+  // --- 3. 2026 BULLETPROOF AUTHENTICATION ---
+  const handleConnect = useCallback(async () => {
+    console.log("Connect attempt initiated..."); 
     try {
-      showConnect({
+      // Direct async connect call (Standard in Connect v8.2+)
+      const authResponse = await connect({
         appDetails: {
-          name: "Stacks DeFi Tracker",
-          icon: window.location.origin + "/favicon.ico",
+          name: "Stacks DeFi Tracker Pro",
+          icon: typeof window !== 'undefined' ? `${window.location.origin}/favicon.ico` : "",
         },
-        onFinish: () => {
-          const userData = getLocalStorage();
-          const address = userData?.addresses?.stx?.[0]?.address;
-          if (address) {
-            setUserAddress(address);
-            setView("personal");
-            // Gentle refresh to ensure all hooks sync
-            window.location.reload();
-          }
-        },
-        onCancel: () => console.log("User closed the wallet modal"),
       });
-    } catch (err) {
-      console.error("Wallet connection error:", err);
-    }
-  };
 
-  const handleLogout = () => {
+      if (authResponse?.addresses?.stx?.[0]?.address) {
+        const address = authResponse.addresses.stx[0].address;
+        setUserAddress(address);
+        setView("personal");
+        console.log("Successfully connected:", address);
+      }
+    } catch (err) {
+      console.error("Connection failed:", err);
+      // Fallback: If wallet isn't detected, direct user to install
+      if (!window.StacksProvider && !window.leather) {
+        alert("No Stacks wallet found. Please install Leather or Xverse extension.");
+      }
+    }
+  }, []);
+
+  const handleLogout = useCallback(() => {
+    disconnect(); // v8 helper
     localStorage.clear();
     setUserAddress(null);
     setView("global");
     window.location.reload();
-  };
+  }, []);
 
   // --- 4. DATA FETCHING ---
   useEffect(() => {
+    if (!mounted) return;
     async function loadInitialData() {
       try {
         setLoading(true);
@@ -97,12 +98,12 @@ export default function Home() {
         setStats(statsData);
         setTvl(tvlData);
       } catch (err) {
-        console.error("API error:", err);
+        console.error("API Fetch Error:", err);
       } finally {
         setLoading(false);
       }
     }
-    if (mounted) loadInitialData();
+    loadInitialData();
   }, [mounted]);
 
   useEffect(() => {
@@ -130,19 +131,17 @@ export default function Home() {
     link.click();
   };
 
-  // Avoid rendering until mounted to prevent UI flickering
-  if (!mounted) return null;
+  if (!mounted) return null; // Prevent hydration flash
 
   if (loading && !stats) return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
       <RefreshCw className="w-8 h-8 text-orange-500 animate-spin" />
-      <p className="text-slate-400 font-medium animate-pulse">Syncing Stacks Nakamoto Node...</p>
+      <p className="text-slate-400 font-medium animate-pulse">Establishing Secure Node Sync...</p>
     </div>
   );
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-10">
-      {/* HEADER SECTION */}
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
           <h1 className="text-4xl md:text-5xl font-space font-bold text-white flex items-center gap-3">
@@ -172,8 +171,9 @@ export default function Home() {
             </div>
           ) : (
             <button 
+              type="button"
               onClick={handleConnect}
-              className="flex items-center gap-2 px-6 py-2 bg-orange-600 hover:bg-orange-500 text-white rounded-lg font-bold transition shadow-lg shadow-orange-900/30 active:scale-95"
+              className="flex items-center gap-2 px-6 py-2 bg-orange-600 hover:bg-orange-500 text-white rounded-lg font-bold transition shadow-lg shadow-orange-900/30 active:scale-95 cursor-pointer z-50"
             >
               <Wallet className="w-4 h-4" /> Connect Wallet
             </button>
@@ -184,14 +184,13 @@ export default function Home() {
         </div>
       </header>
 
-      {/* STATS GRID */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <StatCard title="Total Value Locked" value={stats?.tvl || 0} icon={TrendingUp} isCurrency trend={+5.2} />
         <StatCard title="24h Active Users" value={stats?.users || 0} icon={Users} trend={-1.4} />
         <StatCard title="Network Transactions" value={stats?.events?.length || 0} icon={Activity} />
       </div>
 
-      <section className="relative bg-slate-900/50 border border-white/10 p-6 rounded-2xl backdrop-blur-sm">
+      <section className="bg-slate-900/50 border border-white/10 p-6 rounded-2xl backdrop-blur-sm">
         <div className="h-[350px] w-full">
           <TvlChart data={tvl} />
         </div>
@@ -204,7 +203,7 @@ export default function Home() {
             {loading && <RefreshCw className="w-4 h-4 text-orange-500 animate-spin" />}
           </h2>
           <span className="text-xs text-slate-500 font-mono">
-            {userAddress ? `Wallet: ${userAddress.substring(0,6)}...${userAddress.substring(userAddress.length-4)}` : "Monitoring Network..."}
+            {userAddress ? `Wallet: ${userAddress.slice(0,6)}...${userAddress.slice(-4)}` : "Monitoring Network..."}
           </span>
         </div>
         <div className="bg-slate-900/30 border border-white/5 rounded-2xl overflow-hidden backdrop-blur-sm min-h-[300px]">
