@@ -22,15 +22,28 @@ export default function Home() {
   const [mounted, setMounted] = useState(false);
   const [showToast, setShowToast] = useState(false);
 
-  // --- 1. MOUNT & SESSION RECOVERY ---
+  // --- 1. THE "NUCLEAR" SYNC (Listens for Popup Changes) ---
   useEffect(() => {
     setMounted(true);
-    if (isConnected()) {
-      const userData = getLocalStorage();
-      const address = userData?.addresses?.stx?.[0]?.address;
-      if (address) setUserAddress(address);
-    }
-  }, []);
+
+    const syncWalletState = () => {
+      if (isConnected()) {
+        const userData = getLocalStorage();
+        const address = userData?.addresses?.stx?.[0]?.address;
+        if (address) {
+          setUserAddress(address);
+          // If we just connected, default to personal view
+          if (view === "global") setView("personal");
+        }
+      }
+    };
+
+    // Listen for storage events (when the wallet popup writes to localStorage)
+    window.addEventListener("storage", syncWalletState);
+    syncWalletState(); // Run immediately on mount
+
+    return () => window.removeEventListener("storage", syncWalletState);
+  }, [view]);
 
   // --- 2. WEBSOCKET SETUP ---
   const socketUrl = process.env.NEXT_PUBLIC_WS_URL || "wss://your-backend.railway.app";
@@ -55,7 +68,7 @@ export default function Home() {
     }
   }, [lastJsonMessage, userAddress]);
 
-  // --- 3. INSTANT-SYNC AUTHENTICATION ---
+  // --- 3. UPDATED AUTHENTICATION (With Forced State Injection) ---
   const handleConnect = useCallback(async () => {
     try {
       const authResponse = await connect({
@@ -63,22 +76,26 @@ export default function Home() {
           name: "Stacks DeFi Tracker Pro",
           icon: typeof window !== 'undefined' ? `${window.location.origin}/favicon.ico` : "",
         },
+        onFinish: (payload) => {
+          // Fallback for older browsers/wallets
+          const address = payload?.addresses?.stx?.[0]?.address;
+          if (address) {
+            setUserAddress(address);
+            setView("personal");
+          }
+        }
       });
 
-      // 🚀 Instant State Update (No Refresh Needed)
+      // Direct response handling
       const address = authResponse?.addresses?.stx?.[0]?.address;
       if (address) {
         setUserAddress(address);
-        setView("personal"); // Auto-switch to personal view
+        setView("personal");
         setShowToast(true);
-        setTimeout(() => setShowToast(false), 4000);
-        console.log("Instant sync successful:", address);
+        setTimeout(() => setShowToast(false), 3000);
       }
     } catch (err) {
-      console.error("Connection failed:", err);
-      if (typeof window !== 'undefined' && !window.StacksProvider && !window.leather) {
-        alert("Wallet extension not detected. Please install Leather or Xverse.");
-      }
+      console.error("Connection error:", err);
     }
   }, []);
 
@@ -87,7 +104,6 @@ export default function Home() {
     localStorage.clear();
     setUserAddress(null);
     setView("global");
-    // Only refresh on logout to clear all provider states
     window.location.reload();
   }, []);
 
@@ -136,17 +152,10 @@ export default function Home() {
 
   if (!mounted) return null;
 
-  if (loading && !stats) return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
-      <RefreshCw className="w-8 h-8 text-orange-500 animate-spin" />
-      <p className="text-slate-400 font-medium animate-pulse">Establishing Node Connection...</p>
-    </div>
-  );
-
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-10 relative">
       
-      {/* 🔔 SUCCESS TOAST */}
+      {/* SUCCESS TOAST */}
       <AnimatePresence>
         {showToast && (
           <motion.div 
