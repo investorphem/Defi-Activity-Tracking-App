@@ -1,19 +1,24 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
+import { AppConfig, UserSession, showConnect } from "@stacks/connect";
 import { motion, AnimatePresence } from "framer-motion";
-import { Activity, Users, TrendingUp, RefreshCw, Download, Zap, CheckCircle2 } from "lucide-react";
+import { Activity, Users, TrendingUp, RefreshCw, Download, Zap, LogOut, Wallet, CheckCircle2 } from "lucide-react";
 import useWebSocket from "react-use-websocket";
 import confetti from 'canvas-confetti';
+
+// Project Imports
 import { fetchStats, fetchTvlHistory } from "../lib/api";
 import { getPersonalActivity } from "./actions";
-import { userSession } from "../lib/stacksSession";
-import WalletConnect from "../components/WalletConnect";
 import StatCard from "../components/StatCard";
 import EventsTable from "../components/EventsTable";
 import TvlChart from "../components/TvlChart";
 
 export default function Home() {
+  // 1. Stable Session Initialization for v7.5
+  const appConfig = useMemo(() => new AppConfig(['store_write', 'publish_data']), []);
+  const userSession = useMemo(() => new UserSession({ appConfig }), [appConfig]);
+
   const [stats, setStats] = useState(null);
   const [personalEvents, setPersonalEvents] = useState([]);
   const [tvl, setTvl] = useState([]);
@@ -21,25 +26,41 @@ export default function Home() {
   const [userAddress, setUserAddress] = useState(null);
   const [view, setView] = useState("global");
   const [mounted, setMounted] = useState(false);
+  const [showToast, setShowToast] = useState(false);
 
-  // --- SYNC WALLET STATE ---
+  // 2. Hydration & Session Recovery
   useEffect(() => {
     setMounted(true);
-    const syncAddress = () => {
-      if (userSession.isUserSignedIn()) {
-        const userData = userSession.loadUserData();
-        setUserAddress(userData.profile.stxAddress.mainnet || userData.profile.stxAddress.testnet);
-      } else {
-        setUserAddress(null);
-      }
-    };
+    if (userSession.isUserSignedIn()) {
+      const userData = userSession.loadUserData();
+      const address = userData.profile.stxAddress.mainnet || userData.profile.stxAddress.testnet;
+      setUserAddress(address);
+    }
+  }, [userSession]);
 
-    syncAddress();
-    window.addEventListener('stacks-auth-change', syncAddress);
-    return () => window.removeEventListener('stacks-auth-change', syncAddress);
-  }, []);
+  // 3. The Re-Engineered Connection Logic
+  const handleConnect = useCallback(() => {
+    console.log("Initializing Stacks Auth...");
+    showConnect({
+      appDetails: {
+        name: "Stacks DeFi Tracker Pro",
+        icon: window.location.origin + '/favicon.ico',
+      },
+      userSession,
+      onFinish: () => {
+        // Safe refresh ensures the session persists correctly across the app
+        window.location.reload();
+      },
+      onCancel: () => console.log("Connection Modal Closed")
+    });
+  }, [userSession]);
 
-  // --- WEBSOCKET & DATA FETCHING ---
+  const handleLogout = useCallback(() => {
+    userSession.signUserOut();
+    window.location.reload();
+  }, [userSession]);
+
+  // --- 4. DATA & WEBSOCKET LOGIC ---
   const socketUrl = process.env.NEXT_PUBLIC_WS_URL || "wss://your-backend.railway.app";
   const { lastJsonMessage } = useWebSocket(socketUrl, { shouldReconnect: () => true });
 
@@ -48,7 +69,7 @@ export default function Home() {
       const newEvent = lastJsonMessage;
       if (userAddress && (newEvent.sender === userAddress || newEvent.recipient === userAddress)) {
         setPersonalEvents((prev) => [newEvent, ...prev]);
-        confetti({ particleCount: 100, spread: 70 });
+        confetti({ particleCount: 70, spread: 60 });
       }
     }
   }, [lastJsonMessage, userAddress]);
@@ -87,53 +108,67 @@ export default function Home() {
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-10 relative">
+      
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
           <h1 className="text-4xl md:text-5xl font-space font-bold text-white flex items-center gap-3">
             {view === "global" ? "DeFi Overview" : "My Activity"} 
             <Zap className="w-8 h-8 text-orange-500 fill-orange-500" />
           </h1>
-          <p className="text-slate-400 mt-2 flex items-center gap-2">
+          <p className="text-slate-400 mt-2 flex items-center gap-2 font-medium">
              <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-             Live Ecosystem Metrics
+             Stacks Mainnet Monitoring
           </p>
         </div>
 
         <div className="flex items-center gap-3">
-          {/* INSTANT SYNC TOGGLES */}
-          {userAddress && (
-            <div className="flex bg-slate-900/50 p-1 rounded-xl border border-white/5">
-              <button onClick={() => setView("global")} className={`px-4 py-1.5 rounded-lg text-xs font-bold transition ${view === 'global' ? 'bg-orange-600 text-white' : 'text-slate-400'}`}>Global</button>
-              <button onClick={() => setView("personal")} className={`px-4 py-1.5 rounded-lg text-xs font-bold transition ${view === 'personal' ? 'bg-blue-600 text-white' : 'text-slate-400'}`}>My Tx</button>
+          {userAddress ? (
+            <div className="flex items-center gap-2 bg-slate-900/80 p-1.5 rounded-2xl border border-white/5 shadow-2xl">
+              <div className="flex bg-slate-800 rounded-xl p-1 items-center">
+                <span className="text-xs text-orange-400 font-mono px-3">
+                  {userAddress.slice(0, 5)}...{userAddress.slice(-4)}
+                </span>
+                <button onClick={() => setView("global")} className={`px-4 py-1.5 rounded-lg text-xs font-bold transition ${view === 'global' ? 'bg-orange-600 text-white' : 'text-slate-400'}`}>Global</button>
+                <button onClick={() => setView("personal")} className={`px-4 py-1.5 rounded-lg text-xs font-bold transition ${view === 'personal' ? 'bg-blue-600 text-white' : 'text-slate-400'}`}>My Tx</button>
+              </div>
+              <button onClick={handleLogout} className="p-2 text-slate-500 hover:text-red-400 transition-colors"><LogOut className="w-4 h-4" /></button>
             </div>
+          ) : (
+            <button 
+              onClick={handleConnect} 
+              className="flex items-center gap-2 px-8 py-3 bg-gradient-to-tr from-orange-600 to-orange-700 text-white rounded-xl font-bold transition-all hover:scale-[1.02] active:scale-95 shadow-xl shadow-orange-500/30"
+            >
+              <Wallet className="w-5 h-5" /> Connect Wallet
+            </button>
           )}
           
-          <WalletConnect />
-          
-          <button onClick={exportToCSV} className="flex items-center gap-2 px-4 py-2.5 bg-slate-800/50 hover:bg-slate-700 border border-white/5 rounded-xl text-sm font-medium transition text-white">
+          <button onClick={exportToCSV} className="flex items-center gap-2 px-4 py-3 bg-slate-800/50 hover:bg-slate-700 border border-white/5 rounded-xl text-sm font-medium transition text-white">
             <Download className="w-4 h-4" /> Export
           </button>
         </div>
       </header>
 
+      {/* STATS CARDS */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <StatCard title="Total Value Locked" value={stats?.tvl || 0} icon={TrendingUp} isCurrency />
         <StatCard title="24h Active Users" value={stats?.users || 0} icon={Users} />
-        <StatCard title="Total Transactions" value={stats?.events?.length || 0} icon={Activity} />
+        <StatCard title="Network Events" value={stats?.events?.length || 0} icon={Activity} />
       </div>
 
+      {/* CHART SECTION */}
       <section className="bg-slate-900/40 border border-white/5 p-6 rounded-3xl backdrop-blur-md">
         <div className="h-[350px] w-full"><TvlChart data={tvl} /></div>
       </section>
 
+      {/* DATA TABLE */}
       <section className="space-y-4">
         <div className="flex items-center justify-between px-2">
           <h2 className="text-xl font-space font-bold text-white flex items-center gap-2">
-            {view === "global" ? "Network Activity" : "Your Activity"}
+            {view === "global" ? "Global Feed" : "Personal Activity"}
             {loading && <RefreshCw className="w-4 h-4 text-orange-500 animate-spin" />}
           </h2>
-          <span className="text-xs text-slate-500 font-mono">
-            {userAddress ? "Connected to Mainnet" : "Scanning Network..."}
+          <span className="text-xs text-slate-500 font-mono tracking-widest uppercase">
+            {userAddress ? "Sync Active" : "Scanning..."}
           </span>
         </div>
         <div className="bg-slate-900/20 border border-white/5 rounded-3xl overflow-hidden min-h-[400px]">
