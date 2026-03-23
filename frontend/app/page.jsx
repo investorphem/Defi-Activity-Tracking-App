@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useMemo } from "react";
-import { AppConfig, UserSession, showConnect } from "@stacks/connect";
+import { AppConfig, UserSession, showConnect } from "@stacks/connect"; // Use the standard session classes
 import { motion, AnimatePresence } from "framer-motion";
 import { Activity, Users, TrendingUp, RefreshCw, Download, Zap, LogOut, Wallet, CheckCircle2 } from "lucide-react";
 import useWebSocket from "react-use-websocket";
@@ -13,7 +13,7 @@ import EventsTable from "../components/EventsTable";
 import TvlChart from "../components/TvlChart";
 
 export default function Home() {
-  // --- 1. SESSION & STATE SETUP ---
+  // --- 1. SESSION CONFIG ---
   const appConfig = useMemo(() => new AppConfig(['store_write', 'publish_data']), []);
   const userSession = useMemo(() => new UserSession({ appConfig }), [appConfig]);
 
@@ -26,7 +26,7 @@ export default function Home() {
   const [mounted, setMounted] = useState(false);
   const [showToast, setShowToast] = useState(false);
 
-  // --- 2. INITIAL MOUNT & SESSION RECOVERY ---
+  // --- 2. INSTANT SESSION CHECK ---
   useEffect(() => {
     setMounted(true);
     if (userSession.isUserSignedIn()) {
@@ -59,28 +59,28 @@ export default function Home() {
     }
   }, [lastJsonMessage, userAddress]);
 
-  // --- 4. INSTANT WALLET CONNECTION (No Refresh) ---
+  // --- 4. INSTANT AUTHENTICATION (NO REFRESH) ---
   const handleConnect = useCallback(() => {
     showConnect({
       appDetails: {
-        name: 'Stacks DeFi Tracker Pro',
-        icon: typeof window !== 'undefined' ? window.location.origin + '/favicon.ico' : '',
+        name: "Stacks DeFi Tracker Pro",
+        icon: typeof window !== 'undefined' ? `${window.location.origin}/favicon.ico` : "",
       },
-      userSession,
+      userSession, // Pass the session object here
       onFinish: () => {
-        // 🚀 THE FIX: Instead of reload(), we manually extract and set state
+        // 🚀 THIS IS THE FIX: Manually pull data and set state immediately
         const userData = userSession.loadUserData();
         const address = userData.profile.stxAddress.mainnet || userData.profile.stxAddress.testnet;
         
         if (address) {
           setUserAddress(address);
-          setView("personal"); // Auto-switch view
+          setView("personal"); 
           setShowToast(true);
-          setTimeout(() => setShowToast(false), 4000);
+          setTimeout(() => setShowToast(false), 3000);
           confetti({ particleCount: 150, spread: 60 });
         }
       },
-      onCancel: () => console.log("User closed wallet modal")
+      onCancel: () => console.log("User closed connection modal")
     });
   }, [userSession]);
 
@@ -88,7 +88,7 @@ export default function Home() {
     userSession.signUserOut();
     setUserAddress(null);
     setView("global");
-    window.location.reload(); // Refresh only on logout to clear provider caches
+    window.location.reload(); 
   }, [userSession]);
 
   // --- 5. DATA FETCHING ---
@@ -122,7 +122,7 @@ export default function Home() {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-10 relative">
       
-      {/* 🔔 SUCCESS NOTIFICATION */}
+      {/* SUCCESS TOAST */}
       <AnimatePresence>
         {showToast && (
           <motion.div 
@@ -135,7 +135,6 @@ export default function Home() {
         )}
       </AnimatePresence>
 
-      {/* HEADER */}
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
           <h1 className="text-4xl md:text-5xl font-space font-bold text-white flex items-center gap-3">
@@ -168,8 +167,8 @@ export default function Home() {
             </div>
           ) : (
             <button 
-              onClick={handleConnect}
-              className="flex items-center gap-2 px-6 py-2 bg-orange-600 hover:bg-orange-500 text-white rounded-lg font-bold transition-all shadow-lg active:scale-95 z-50"
+              type="button" onClick={handleConnect}
+              className="flex items-center gap-2 px-6 py-2 bg-orange-600 hover:bg-orange-500 text-white rounded-lg font-bold transition-all shadow-lg active:scale-95 cursor-pointer z-50"
             >
               <Wallet className="w-4 h-4" /> Connect Wallet
             </button>
@@ -177,24 +176,22 @@ export default function Home() {
         </div>
       </header>
 
-      {/* STATS GRID */}
+      {/* ... Rest of your UI (StatCards, Chart, EventsTable) ... */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <StatCard title="Total Value Locked" value={stats?.tvl || 0} icon={TrendingUp} isCurrency trend={+5.2} />
         <StatCard title="24h Active Users" value={stats?.users || 0} icon={Users} trend={-1.4} />
         <StatCard title="Network Transactions" value={stats?.events?.length || 0} icon={Activity} />
       </div>
 
-      {/* CHART */}
       <section className="bg-slate-900/50 border border-white/10 p-6 rounded-2xl backdrop-blur-sm">
         <div className="h-[350px] w-full">
           <TvlChart data={tvl} />
         </div>
       </section>
 
-      {/* LIVE FEED */}
       <section className="space-y-4">
         <h2 className="text-xl font-space font-bold text-white px-1">
-          {view === "global" ? "Live Transaction Feed" : "Personal Transaction History"}
+            {view === "global" ? "Live Transaction Feed" : "Personal Transaction History"}
         </h2>
         <div className="bg-slate-900/30 border border-white/5 rounded-2xl overflow-hidden backdrop-blur-sm min-h-[300px]">
           <AnimatePresence mode="popLayout">
