@@ -1,18 +1,37 @@
-# Stacks DeFi Activity Tracker
+# Stacks DeFi Activity Tracker 📊  
+### Real-Time On-Chain Analytics Built on Stacks
 
-A Stacks-native DeFi analytics and activity tracking platform that indexes on-chain events directly from the Stacks blockchain using Hiro Chainhooks. The app provides real-time insights into token transfers, user activity, and TVL trends without relying on third-party APIs.
+![Built on Stacks](https://img.shields.io/badge/Built%20on-Stacks-orange)
+![Chainhooks](https://img.shields.io/badge/Data-Hiro%20Chainhooks-blue)
+![Status](https://img.shields.io/badge/Status-Live-brightgreen)
+![Backend](https://img.shields.io/badge/Backend-Node.js-informational)
+![Frontend](https://img.shields.io/badge/Frontend-Next.js-black)
+![License](https://img.shields.io/badge/License-MIT-lightgrey)
 
 ---
 
 ## 🚀 Overview
 
-Stacks DeFi Activity Tracker monitors fungible token (FT) activity on the Stacks blockchain and presents meaningful metrics through a clean frontend dashboard.
+Stacks DeFi Activity Tracker is a **Stacks-native analytics platform** that indexes and analyzes on-chain activity directly from the **Stacks blockchain**, secured by Bitcoin.
 
-Key focus areas:
-- On-chain event indexing
-- Real-time DeFi activity tracking
-- Transparent, API-free data sourcing
-- Scalable backend architecture
+The system uses Hiro Chainhooks to stream blockchain events in real time, enabling a fully transparent, API-free data pipeline for DeFi analytics.
+
+---
+
+## 🔗 Built on Stacks
+
+- Native to the **Stacks blockchain**
+- Data sourced directly from **on-chain Clarity smart contract events**
+- Powered by **Hiro Chainhooks**
+- Supports **Stacks Mainnet**
+- No reliance on third-party APIs
+
+---
+
+## 👤 Attribution
+
+- Built and maintained by: SPXXXXX  
+- All indexed data originates from the Stacks blockchain  
 
 ---
 
@@ -26,22 +45,24 @@ Webhook → Backend (Node.js + Express)
 ↓  
 PostgreSQL Database  
 ↓  
-Next.js Frontend Dashboard
+Next.js Frontend Dashboard  
 
 ---
 
-## 🔗 Chainhooks Integration (Core Feature)
+## 🔍 Chainhooks Integration
 
 This project uses Hiro Chainhooks to subscribe directly to Stacks blockchain events.
 
-### What is tracked
-- Fungible Token (FT) events
-- Token transfers
-- Decoded Clarity values
-- Block height, transaction ID, sender
+### Tracked Data
+- Fungible Token (FT) transfer events  
+- Transaction IDs  
+- Sender and recipient addresses  
+- Block height  
+- Decoded Clarity values  
 
-### Example Chainhook Configuration
+### Example Configuration
 
+```json
 {
   "chain": "stacks",
   "if_this": {
@@ -51,65 +72,70 @@ This project uses Hiro Chainhooks to subscribe directly to Stacks blockchain eve
   },
   "then_that": {
     "http_post": {
-      "url": "https://<BACKEND-URL>/webhook/token_transfer",
-      "authorization_header": "x-api-key: <API_KEY>"
+      "url": "https://your-backend/webhook/token_transfer",
+      "authorization_header": "x-api-key: your_api_key"
     }
   }
 }
-
-This enables trustless, real-time blockchain indexing without polling or external APIs.
+```
 
 ---
 
 ## 📊 Features
 
 ### Dashboard
-- Total Value Locked (TVL)
-- Active user count
-- Recent on-chain events
-- Historical TVL chart
+- Total Value Locked (TVL)  
+- Active user count  
+- Real-time transaction feed  
+- Historical analytics  
 
 ### Wallet View
-- Per-wallet activity history
-- Token transfers linked to addresses
+- Per-wallet activity tracking  
+- Token transfer history  
 
 ### Backend
-- Webhook ingestion from Chainhooks
-- Rate-limited API endpoints
-- WebSocket support for live updates
-- PostgreSQL event storage
+- Chainhooks webhook ingestion  
+- PostgreSQL storage  
+- WebSocket real-time updates  
+- Scalable API layer  
+
+---
+
+## 🌐 Live Links
+
+- Live App: https://your-vercel-url.vercel.app  
+- API: https://your-backend/api/stats  
+- Explorer: https://explorer.hiro.so  
 
 ---
 
 ## 🛠 Tech Stack
 
 ### Frontend
-- Next.js (App Router)
-- React 18
-- Recharts
-- Deployed on Vercel
+- Next.js  
+- React 18  
+- Recharts  
 
 ### Backend
-- Node.js
-- Express
-- PostgreSQL
-- WebSockets
-- Chainhooks Webhooks
+- Node.js  
+- Express  
+- PostgreSQL  
+- WebSockets  
 
 ---
 
-## 🔐 Environment Variables
+## ⚙️ Environment Variables
 
-### Backend (.env)
+### Backend
 
 DATABASE_URL=postgresql://user:password@host:5432/db  
-API_KEY=supersecretkey  
+API_KEY=your_api_key  
 NETWORK=mainnet  
 
-### Frontend (Vercel)
+### Frontend
 
-NEXT_PUBLIC_API_BASE_URL=https://<BACKEND-URL>  
-NEXT_PUBLIC_WS_URL=wss://<BACKEND-URL>  
+NEXT_PUBLIC_API_BASE_URL=https://your-backend  
+NEXT_PUBLIC_WS_URL=wss://your-backend  
 
 ---
 
@@ -127,39 +153,49 @@ POST /webhook/:type
 
 ### Backend
 
-npm install  
-npm start  
+```bash
+npm install
+npm start
+```
 
 ### Frontend
 
-npm install  
-npm run dev  
+```bash
+npm install
+npm run dev
+```
 
 ---
 
 ## 🌱 Extending This Project
 
-- Monitor multiple FT contracts
-- Track NFT mint and transfer events
-- Add protocol-level analytics
-- Introduce alerts and notifications
-- Support testnet and mainnet switching
+- Multi-token tracking  
+- NFT event indexing  
+- Protocol-level analytics  
+- Alerting system  
+- Testnet support  
 
 ---
 
 ## 🧠 Why This Matters
 
 This project demonstrates:
-- Direct blockchain data consumption
-- Real-world use of Chainhooks
-- Scalable DeFi analytics architecture
-- Deep understanding of the Stacks ecosystem
+
+- Direct consumption of **Stacks blockchain data**
+- Real-world use of **Hiro Chainhooks**
+- Deep understanding of **Clarity event structures**
+- Scalable **DeFi analytics infrastructure**
 
 ---
 
 ## 📌 Status
 
-Chainhooks: Active  
-Backend ingestion: Ready  
-Frontend dashboard: Live  
-Multi-asset support: Expandable
+- Chainhooks: Active  
+- Backend: Running  
+- Frontend: Live  
+- Multi-asset support: In progress  
+
+---
+
+## 📅 Last Updated
+2026-03-25
