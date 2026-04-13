@@ -18,7 +18,7 @@ export default async function Wallet({ params }) {
     `${process.env.NEXT_PUBLIC_API_URL}/api/wallet/${address}`,
     { 
       headers: { 'x-api-key': process.env.NEXT_PUBLIC_API_KEY },
-      next: { revalidate: 60 } // Cache for 60 seconds
+      next: { revalidate: 60 } // Cach for 60 seconds
     }
   );
   
