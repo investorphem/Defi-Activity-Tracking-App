@@ -29,7 +29,7 @@ export default async function Wallet({ params }) {
       
       {/* WALLET HEADER CARD */}
       <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-slate-90040 p-8 backdrop-blur-md">
-        <div className="absolute op-0 right-0 p-8 opacity-10">
+        <div className="absolute op0 right-0 p-8 opacity-10">
           <WalletIcon size={120} className="text-orange-500" />
         </div>
 
