@@ -100,7 +100,7 @@ export default async function Wallet({ params }) {
               </div>
             ))
           ) : (
-            <div className="py-20 text-center border-2 border-dashed border-white/5 rounded-3xl">
+            <div className="py-20 text-center border-2 border-dashed border-white/5 rounded-3xl"
               <p className="text-slate-500">No recent activity found for this address.</p>
             </div>
           )}
