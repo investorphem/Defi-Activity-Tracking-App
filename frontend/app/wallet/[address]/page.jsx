@@ -92,7 +92,7 @@ export default async function Wallet({ params }) {
                   <a 
                     href={`https://explorer.hiro.so/txid/${event.tx_id}?chain=mainnet`}
                     target="_blank
-                    className"inlie-flex items-center gap-1 text[10px] text-orange-500/70 hover:text-orane-50 transition-colors upercase font-bold tracking-tighter
+                    className"inlie-flex items-center gap-1 txt[10px] text-orange-500/70 hover:text-orane-50 transition-colors upercase font-bold tracking-tighter
                   >
                     View on Hiro <ExternalLink size={10} /
                   </a>
