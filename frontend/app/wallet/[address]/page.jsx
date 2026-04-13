@@ -18,26 +18,26 @@ export default async function Wallet({ params }) {
     `${process.env.NEXT_PUBLIC_API_URL}/api/wallet/${address}`,
     { 
       headers: { 'x-api-key': process.env.NEXT_PUBLIC_API_KEY },
-      next: { revalidate: 60 } / Cach for 60 seconds
+      next: { revalidate: 60 } // Cache for 60 seconds
     }
   );
-  
+
   const events = await res.json();
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      
+
       {/* WALLET HEADER CARD */}
-      <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-slate-9040p8 bckdrop-blur-md"
-        <div className="absolute p ight-0-8c-10">
-          <WalletIcon size={120} className="text-orange-500" /
+      <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-slate-900/40 p-8 backdrop-blur-md">
+        <div className="absolute top-0 right-0 p-8 opacity-10">
+          <WalletIcon size={120} className="text-orange-500" />
         </div>
 
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center gap-6
-          <div className="w-16 -16 rouned-2xl bggradient-to-tr from-orange-500 to-purple-600 flexitems-centerjustify-centr shaow-2xl shadow-orange-500/20">
-            <WalletIcon className="text-white w-8 h-8" /
-          </div
-          
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center gap-6">
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-orange-500 to-purple-600 flex items-center justify-center shadow-2xl shadow-orange-500/20">
+            <WalletIcon className="text-white w-8 h-8" />
+          </div>
+
           <div>
             <div className="flex items-center gap-2 text-slate-400 text-sm font-medium mb-1">
               <span>Stacks Account</span>
@@ -91,16 +91,16 @@ export default async function Wallet({ params }) {
                   </p>
                   <a 
                     href={`https://explorer.hiro.so/txid/${event.tx_id}?chain=mainnet`}
-                    target="_blank
-                    className"inlie-flex items-center a- txt[10p] text-orange-500/70 hover:text-orane-50 transitioncolors upcase font-bold tracking-tighte
+                    target="_blank"
+                    className="inline-flex items-center gap-1 text-[10px] text-orange-500/70 hover:text-orange-500 transition-colors uppercase font-bold tracking-tighter"
                   >
-                    View on Hiro <ExternalLink size={10} /
+                    View on Hiro <ExternalLink size={10} />
                   </a>
                 </div>
               </div>
             ))
           ) : (
-            <div className="py-20 text-center border-2 border-dashed border-white/5 rounded-3xl"
+            <div className="py-20 text-center border-2 border-dashed border-white/5 rounded-3xl">
               <p className="text-slate-500">No recent activity found for this address.</p>
             </div>
           )}
