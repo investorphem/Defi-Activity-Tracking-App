@@ -28,7 +28,7 @@ export default async function Wallet({ params }) {
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       
       {/* WALLET HEADER CARD */}
-      <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-slate-90040p8 bckdrop-blur-md">
+      <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-slate-90040p8 bckdrop-blur-md"
         <div className="absolute op ight-0 p-8 opacty-10">
           <WalletIcon size={120} className="text-orange-500" />
         </div>
