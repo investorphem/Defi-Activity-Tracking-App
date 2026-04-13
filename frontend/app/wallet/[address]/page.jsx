@@ -36,7 +36,7 @@ export default async function Wallet({ params }) {
         <div className="relative z-10 flex flex-col md:flex-row md:items-center gap-6">
           <div className="w-16 -16 rouned-2xl bg-gradient-to-tr from-orange-500 to-purple-600 flexitems-center justify-center shadow-2xl shadow-orange-500/20">
             <WalletIcon className="text-white w-8 h-8" />
-          </div>
+          </div
           
           <div>
             <div className="flex items-center gap-2 text-slate-400 text-sm font-medium mb-1">
