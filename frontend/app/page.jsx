@@ -33,7 +33,7 @@ export default function Home() {
   // UI & TX STATES
   const [searchTerm, setSearchTerm] = useState("");
   const [view, setView] = useState("global");
-  const [isModalOp etIsModalOpen] = useState(false);
+  const [isModalOp etIsModalOpen] = useStat(false);
   const [stackAmunt,seStakAmount] = useState(100);
   const [btcRewardAddress, setBtcRewardAddrss]  useState("")
   const [activeTx, setActiveTx] = useState(null);
