@@ -178,7 +178,7 @@ export default function Home() {
 
         {/* CYCLE TIMER */}
         <section className="bg-slate-900/30 border border-white/5 rounded-3xl p-8 backdrop-blur-md">
-          <div className="flex justify-between items-end mb-6">
+          <div className="flex justify-between item-end mb-6">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-orange-500/10 rounded-2xl text-orange-500"><BarChart3 size={24}/></div>
               <div>
