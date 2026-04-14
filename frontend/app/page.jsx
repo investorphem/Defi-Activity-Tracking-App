@@ -191,7 +191,7 @@ export default function Home() {
               <p className="text-[10px] text-slate-500 uppercase font-bold">Until Locked</p>
             </div>
           </div>
-          <div className="w-full h-2.5 bg-black/60 rounded-full overflow-hidden border border-white/5">
+          <div className="w-full h-2.5 bg-black/60 rounded-full overflow-hidden border border-white/5"
             <motion.div initial={{ width: 0 }} animate={{ width: `${cycleInfo.progress}%` }} className="h-full bg-orange-600 shadow-[0_0_15px_rgba(234,88,12,0.4)]" />
           </div>
         </section>
