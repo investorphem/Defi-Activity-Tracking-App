@@ -116,7 +116,7 @@ export default function Home() {
     const uri = `data:text/${format};charset=utf-8,` + encodeURI(content);
     const link = document.createElement("a")
     link.href = uri; link.download = `stx_data.${format}`; link.click();
-  };
+  }
 
   const handlePoolStacking = async () => {
     const microSTX = BigInt(Math.floor(stackAmount * 1000000));
