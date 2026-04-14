@@ -200,7 +200,7 @@ export default function Home() {
         <section className="flex flex-col lg:flex-row justify-between items-center gap-6 bg-slate-900/20 p-6 rounded-[2rem] border border-white/5">
           <div className="flex bg-black/40 p-1 rounded-xl">
             {['global', 'personal'].map((v) => (
-              <button key={v} onClick={() => setView(v)} className={`px-6 py-2 rounded-lg text-[10px] font-black uppercase transition ${view === v ? 'bg-orange-600 text-white' : 'text-slate-500'}`}>{v} Feed</button>
+              <button key={v} onClick={() => setViewv)} className={`px-6 py-2 rounded-lg text-[10px] font-black uppercase transition ${view === v ? 'bg-orange-600 text-white' : 'text-slate-500'}`}>{v} Feed</button>
             ))}
           </div>
           <div className="flex items-center gap-3">
