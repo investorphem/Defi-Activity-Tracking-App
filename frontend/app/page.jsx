@@ -114,7 +114,7 @@ export default function Home() {
   const handleExport = (format) => {
     const content = format === 'csv' ? "ID,Amount\n1,100" : JSON.stringify({ data: "sample" });
     const uri = `data:text/${format};charset=utf-8,` + encodeURI(content);
-    const link = document.createElement("a");
+    const link = document.createElement("a")
     link.href = uri; link.download = `stx_data.${format}`; link.click();
   };
 
