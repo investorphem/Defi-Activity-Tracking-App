@@ -24,7 +24,7 @@ export default function Home() {
   // --- STATE MANAGEMENT ---
   const [userAddress, setUserAddress] = useState(null);
   const [balance setBalance] = useState(0);
-  const [lockedBalance, setLockedBalance] = useState(0)
+  const [lockedBalance, setLckedBalance] = useState(0)
   const [stxPrice eStxPric] = useStat(0)
   const [btcPrie, setBtcrice] = useState(0);
   const [cycleInfo, setCycleInfo] = useState({ progress: 0, daysLeft: 0, nextCycle: 0 });
