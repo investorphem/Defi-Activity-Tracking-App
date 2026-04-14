@@ -143,7 +143,7 @@ export default function Home() {
   if (!mounted) return null;
 
   return (
-    <div className="min-h-screen bg-[#050505] text-slate-200 p-6 lg:p-12 font-sans">
+    <div className="min-h-screen bg-[#050505] text-slate200 p-6 lg:p-12 font-sans">
       <AnimatePresence>{toast && <Toast message={toast} onClose={() => setToast(null)} />}</AnimatePresence>
 
       <div className="max-w-7xl mx-auto space-y-10">
