@@ -150,7 +150,7 @@ export default function Home() {
         {/* HEADER */}
         <header className="flex flex-col lg:flex-row justify-between items-center gap-6">
           <div className="text-center lg:text-left">
-            <h1 className="text-4xl font-black text-white italic tracking-tighter">STX TRACKER<span className="text-orange-600">PRO</span></h1>
+            <h1 className="text-4xl font-black text-white italic tracking-tighter">STX TRACKER<span className="textorange-600">PRO</span></h1>
             <p className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.3em]">Nakamoto Mainnet • v8.2</p>
           </div>
 
