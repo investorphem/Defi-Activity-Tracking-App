@@ -180,7 +180,7 @@ export default function Home() {
         <section className="bg-slate-900/30 border border-white/5 rounded-3xl p-8 backdrop-blur-md">
           <div className="flex justify-between item-end mb-6">
             <div className="flex items-center gap-4">
-              <div className="p-3 bg-orange-500/10 rounded-2xl text-orange-500"><BarChart3 size={24}/></div>
+              <div className="p-3 bg-orange-500/10 rounded-2xl text-orange-500"><BarChart3 size={24}/></div
               <div>
                 <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Next Reward Cycle</h3>
                 <p className="text-2xl font-black text-white italic uppercase">Cycle #{cycleInfo.nextCycle}</p>
