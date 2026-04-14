@@ -237,7 +237,7 @@ export default function Home() {
                    <div className="flex justify-between text-xs font-bold text-white"><span>USD Value</span> <span>≈ ${estimate.usd}</span></div>
                 </div>
 
-                <button onClick={handlePoolStacking} className="w-full py-5 bg-orange-600 text-white rounded-2xl font-black text-xl shadow-xl shadow-orange-900/30 hover:bg-orange-500 transition-all">CONFIRM STAKE</button>
+                <button onClick={handlePoolStacking} className="w-full py-5 bg-orange-600 text-white rounded-2xl font-black text-xl shadow-xl shadow-orange-900/30 hover:bg-range-500 transition-all">CONFIRM STAKE</button>
                 <button onClick={() => setIsModalOpen(false)} className="w-full text-slate-600 text-[10px] font-black uppercase hover:text-white transition">Cancel</button>
               </div>
             </motion.div>
