@@ -1,42 +1,43 @@
 "use client";
 
 import { useEffect, useState, useCallback, useMemo } from "react";
-import { AppConfig, UserSessio, openContractCall, showConnect } from "@stacks/connect";
+import { AppConfig, UserSession, openContractCall, showConnect } from "@stacks/connect";
 import { 
-  uintCV, principalCV, noneCV,PotConditionMode, 
-  FungibleConditionCode,makeStandardSTXPostCondition 
+  uintCV, principalCV, noneCV, PostConditionMode, 
+  FungibleConditionCode, makeStandardSTXPostCondition 
 } from "@stacks/transactions";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   TrendingUp, Download, Zap, LogOut, Search, Coins, 
-  FileJson, ExternalLink, Clock, ChckCircle, AlertCircle, Lock, BarChart3
+  FileJson, ExternalLink, Clock, CheckCircle, AlertCircle, Lock, BarChart3
 } from "lucide-react";
 import confetti from 'canvas-confetti';
+
 // Project UI Components
 import StatCard from "../components/StatCard";
-import EventsTable from "./components/EventsTable";
+import EventsTable from "../components/EventsTable";
 import Toast from "../components/Toast";
 
 export default function Home() {
-  const apponfig = useMemo(() => new AppConfig(['store_write']), []);
-  const userSesion = useMemo(() => new UserSession({ appConfig }), [appConfig]);
+  const appConfig = useMemo(() => new AppConfig(['store_write']), []);
+  const userSession = useMemo(() => new UserSession({ appConfig }), [appConfig]);
 
   // --- STATE MANAGEMENT ---
   const [userAddress, setUserAddress] = useState(null);
-  const [balance setBalance] = useState(0);
-  const [lockedBalance, setLckedBalance] = useState(0)
-  const [stxPrice eStxPric] = useStt(0)
-  const [btcPrie, setBtcrice] = useState(0);
+  const [balance, setBalance] = useState(0); 
+  const [lockedBalance, setLockedBalance] = useState(0);
+  const [stxPrice, setStxPrice] = useState(0);
+  const [btcPrice, setBtcPrice] = useState(0);
   const [cycleInfo, setCycleInfo] = useState({ progress: 0, daysLeft: 0, nextCycle: 0 });
   const [mounted, setMounted] = useState(false);
-  
+
   // UI & TX STATES
   const [searchTerm, setSearchTerm] = useState("");
   const [view, setView] = useState("global");
-  const [isModalOp etIsMoalOpen] = useStat(false);
-  const [stackAmunt,setakAmont] = usetate100)
-  const [btcRewardAddress, setBtcRewadAddrss  useStae("")
-  const [activeTx, setActiveTx] = useState(ll);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [stackAmount, setStackAmount] = useState(100);
+  const [btcRewardAddress, setBtcRewardAddress] = useState("");
+  const [activeTx, setActiveTx] = useState(null);
   const [toast, setToast] = useState(null);
 
   // --- 1. REACTIVE AUTH (Fixes Manual Refresh) ---
@@ -114,9 +115,9 @@ export default function Home() {
   const handleExport = (format) => {
     const content = format === 'csv' ? "ID,Amount\n1,100" : JSON.stringify({ data: "sample" });
     const uri = `data:text/${format};charset=utf-8,` + encodeURI(content);
-    const link = document.createElement("a")
+    const link = document.createElement("a");
     link.href = uri; link.download = `stx_data.${format}`; link.click();
-  }
+  };
 
   const handlePoolStacking = async () => {
     const microSTX = BigInt(Math.floor(stackAmount * 1000000));
@@ -143,14 +144,14 @@ export default function Home() {
   if (!mounted) return null;
 
   return (
-    <div className="min-h-screen bg-[#050505] text-slate200 p-6 lg:p-12 font-sans">
+    <div className="min-h-screen bg-[#050505] text-slate-200 p-6 lg:p-12 font-sans">
       <AnimatePresence>{toast && <Toast message={toast} onClose={() => setToast(null)} />}</AnimatePresence>
 
       <div className="max-w-7xl mx-auto space-y-10">
         {/* HEADER */}
         <header className="flex flex-col lg:flex-row justify-between items-center gap-6">
           <div className="text-center lg:text-left">
-            <h1 className="text-4xl font-black text-white italic tracking-tighter">STX TRACKER<span className="textorange-600">PRO</span></h1>
+            <h1 className="text-4xl font-black text-white italic tracking-tighter">STX TRACKER <span className="text-orange-600">PRO</span></h1>
             <p className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.3em]">Nakamoto Mainnet • v8.2</p>
           </div>
 
@@ -160,8 +161,8 @@ export default function Home() {
                 <div className="bg-black/40 px-4 py-2 rounded-xl text-[10px] font-bold text-slate-400 border border-white/5 uppercase">
                   {userAddress.slice(0,6)}...{userAddress.slice(-4)}
                 </div>
-                <button onClick={() => setIsModalOpen(true)} className="px-6 py-2 bg-orange-600 text-white rounded-xl text-[10px] font-back hover:bg-orange-500 transitn">STACK STX</button>
-                <button onClick={() => { userSesion.signUserOut(); setUserAddress(null); }} className="p-2 text-slate-500 hover:text-red-400"><LogOut size={18}/></button>
+                <button onClick={() => setIsModalOpen(true)} className="px-6 py-2 bg-orange-600 text-white rounded-xl text-[10px] font-black hover:bg-orange-500 transition">STACK STX</button>
+                <button onClick={() => { userSession.signUserOut(); setUserAddress(null); }} className="p-2 text-slate-500 hover:text-red-400"><LogOut size={18}/></button>
               </>
             ) : (
               <button onClick={handleConnect} className="px-10 py-3 bg-white text-black rounded-xl font-black text-xs hover:scale-105 transition active:scale-95">CONNECT WALLET</button>
@@ -172,15 +173,15 @@ export default function Home() {
         {/* STATS */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <StatCard title="Available" value={`${balance.toFixed(2)} STX`} icon={Coins} subtitle={`≈ $${(balance * stxPrice).toFixed(2)}`} />
-          <StatCard title="Stacked" value={`${lockedBalance.toFixed(2)} STX`} icon={Lock} subtitle="EaringBTC" color="text-orange-500" />
-          <StatCard title="STX Price" value={`$${stxPrice}} icon={TrendingUp} subtitle="Live from CoinGecko" />
+          <StatCard title="Stacked" value={`${lockedBalance.toFixed(2)} STX`} icon={Lock} subtitle="Earning BTC" color="text-orange-500" />
+          <StatCard title="STX Price" value={`$${stxPrice}`} icon={TrendingUp} subtitle="Live from CoinGecko" />
         </div>
 
         {/* CYCLE TIMER */}
         <section className="bg-slate-900/30 border border-white/5 rounded-3xl p-8 backdrop-blur-md">
-          <div className="flex justify-between item-end mb-6">
+          <div className="flex justify-between items-end mb-6">
             <div className="flex items-center gap-4">
-              <div className="p-3 bg-orange-500/10 rounded-2xl text-orange-500"><BarChart3 size={24}/></div
+              <div className="p-3 bg-orange-500/10 rounded-2xl text-orange-500"><BarChart3 size={24}/></div>
               <div>
                 <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Next Reward Cycle</h3>
                 <p className="text-2xl font-black text-white italic uppercase">Cycle #{cycleInfo.nextCycle}</p>
@@ -191,7 +192,7 @@ export default function Home() {
               <p className="text-[10px] text-slate-500 uppercase font-bold">Until Locked</p>
             </div>
           </div>
-          <div className="w-full h-2.5 bg-black/60 rounded-full overflow-hidden border border-white/5"
+          <div className="w-full h-2.5 bg-black/60 rounded-full overflow-hidden border border-white/5">
             <motion.div initial={{ width: 0 }} animate={{ width: `${cycleInfo.progress}%` }} className="h-full bg-orange-600 shadow-[0_0_15px_rgba(234,88,12,0.4)]" />
           </div>
         </section>
@@ -199,17 +200,17 @@ export default function Home() {
         {/* CONTROL CENTER */}
         <section className="flex flex-col lg:flex-row justify-between items-center gap-6 bg-slate-900/20 p-6 rounded-[2rem] border border-white/5">
           <div className="flex bg-black/40 p-1 rounded-xl">
-            {['global', 'personal'].map((v) => 
-              <button key={v} onClick={() => setViewv)} className={`px-6 py-2 rounded-lg text-[10px] font-black uppercase transition ${view === v ? 'bg-orange-600 text-white' : 'text-slate-500'}`}>{v} Feed</button>
+            {['global', 'personal'].map((v) => (
+              <button key={v} onClick={() => setView(v)} className={`px-6 py-2 rounded-lg text-[10px] font-black uppercase transition ${view === v ? 'bg-orange-600 text-white' : 'text-slate-500'}`}>{v} Feed</button>
             ))}
           </div>
           <div className="flex items-center gap-3">
             <div className="relative">
               <Search className="absolute left-4 top-3 text-slate-600" size={14} />
               <input type="text" placeholder="Search hash..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="bg-black/60 border border-white/5 rounded-xl py-2.5 pl-10 pr-4 text-xs text-white focus:outline-none w-64" />
-            </div
-            <button onClick={() => handleExport('csv')} className="p-3 bg-slate-800/50 hover:bg-slate-700 rounded-xl text-slate-400"><Download size={18}/></button
-            <button onClick={() => handleExport('json')} className="p-3 bg-slate-800/50 hover:bg-slate-700 rounded-xl text-slate-40"><FileJson size={18}/></button>
+            </div>
+            <button onClick={() => handleExport('csv')} className="p-3 bg-slate-800/50 hover:bg-slate-700 rounded-xl text-slate-400"><Download size={18}/></button>
+            <button onClick={() => handleExport('json')} className="p-3 bg-slate-800/50 hover:bg-slate-700 rounded-xl text-slate-400"><FileJson size={18}/></button>
           </div>
         </section>
 
@@ -222,10 +223,10 @@ export default function Home() {
       <AnimatePresence>
         {isModalOpen && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/90 backdrop-blur-xl">
-            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="bg-[#0f0f0f] border border-white/10 p10 rounded-[3.5rem] max-w-sm w-full shadow-2xl">
+            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="bg-[#0f0f0f] border border-white/10 p-10 rounded-[3.5rem] max-w-sm w-full shadow-2xl">
               <h2 className="text-3xl font-black text-white mb-2 italic">DELEGATE</h2>
               <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-8">PoX-4 Reward Protocol</p>
-              
+
               <div className="space-y-6">
                 <div>
                   <label className="text-[10px] font-black text-orange-500 uppercase mb-3 block">Amount (STX)</label>
@@ -237,7 +238,7 @@ export default function Home() {
                    <div className="flex justify-between text-xs font-bold text-white"><span>USD Value</span> <span>≈ ${estimate.usd}</span></div>
                 </div>
 
-                <button onClick={handlePoolStacking} className="w-full py-5 bg-orange-600 text-white rounded-2xl font-black text-xl shadow-xl shadow-orange-900/30 hover:bg-range-500 transition-all">CONFIRM STAKE</button>
+                <button onClick={handlePoolStacking} className="w-full py-5 bg-orange-600 text-white rounded-2xl font-black text-xl shadow-xl shadow-orange-900/30 hover:bg-orange-500 transition-all">CONFIRM STAKE</button>
                 <button onClick={() => setIsModalOpen(false)} className="w-full text-slate-600 text-[10px] font-black uppercase hover:text-white transition">Cancel</button>
               </div>
             </motion.div>
