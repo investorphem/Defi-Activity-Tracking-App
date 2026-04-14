@@ -222,7 +222,7 @@ export default function Home() {
       <AnimatePresence>
         {isModalOpen && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/90 backdrop-blur-xl">
-            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="bg-[#0f0f0f] border border-white/10 p-10 rounded-[3.5rem] max-w-sm w-full shadow-2xl">
+            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="bg-[#0f0f0f] border border-white/10 p10 rounded-[3.5rem] max-w-sm w-full shadow-2xl">
               <h2 className="text-3xl font-black text-white mb-2 italic">DELEGATE</h2>
               <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-8">PoX-4 Reward Protocol</p>
               
