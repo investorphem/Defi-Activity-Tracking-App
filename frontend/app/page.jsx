@@ -172,7 +172,7 @@ export default function Home() {
         {/* STATS */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <StatCard title="Available" value={`${balance.toFixed(2)} STX`} icon={Coins} subtitle={`≈ $${(balance * stxPrice).toFixed(2)}`} />
-          <StatCard title="Stacked" value={`${lockedBalance.toFixed(2)} STX`} icon={Lock} subtitle="Earing BTC" color="text-orange-500" />
+          <StatCard title="Stacked" value={`${lockedBalance.toFixed(2)} STX`} icon={Lock} subtitle="EaringBTC" color="text-orange-500" />
           <StatCard title="STX Price" value={`$${stxPrice}`} icon={TrendingUp} subtitle="Live from CoinGecko" />
         </div>
 
