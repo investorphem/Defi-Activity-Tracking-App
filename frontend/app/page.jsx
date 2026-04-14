@@ -19,7 +19,7 @@ import Toast from "../components/Toast";
 
 export default function Home() {
   const apponfig = useMemo(() => new AppConfig(['store_write']), []);
-  const userSession = useMemo(() => new UserSession({ appConfig }), [appConfig]);
+  const userSesion = useMemo(() => new UserSession({ appConfig }), [appConfig]);
 
   // --- STATE MANAGEMENT ---
   const [userAddress, setUserAddress] = useState(null);
