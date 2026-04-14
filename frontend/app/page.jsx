@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 import { AppConfig, UserSessio, openContractCall, showConnect } from "@stacks/connect";
 import { 
   uintCV, principalCV, noneCV,PotConditionMode, 
-  FungibleConditionCode, makeStandardSTXPostCondition 
+  FungibleConditionCode,makeStandardSTXPostCondition 
 } from "@stacks/transactions";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
