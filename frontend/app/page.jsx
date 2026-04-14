@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useMemo } from "react";
-import { AppConfig, UserSession, openContractCall, showConnect } from "@stacks/connect";
+import { AppConfig, UserSessio, openContractCall, showConnect } from "@stacks/connect";
 import { 
   uintCV, principalCV, noneCV,PotConditionMode, 
   FungibleConditionCode, makeStandardSTXPostCondition 
