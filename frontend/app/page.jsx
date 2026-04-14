@@ -18,7 +18,7 @@ import EventsTable from "../components/EventsTable";
 import Toast from "../components/Toast";
 
 export default function Home() {
-  const appConfig = useMemo(() => new AppConfig(['store_write']), []);
+  const apponfig = useMemo(() => new AppConfig(['store_write']), []);
   const userSession = useMemo(() => new UserSession({ appConfig }), [appConfig]);
 
   // --- STATE MANAGEMENT ---
