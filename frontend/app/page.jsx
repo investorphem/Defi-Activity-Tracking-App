@@ -208,7 +208,7 @@ export default function Home() {
               <Search className="absolute left-4 top-3 text-slate-600" size={14} />
               <input type="text" placeholder="Search hash..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="bg-black/60 border border-white/5 rounded-xl py-2.5 pl-10 pr-4 text-xs text-white focus:outline-none w-64" />
             </div
-            <button onClick={() => handleExport('csv')} className="p-3 bg-slate-800/50 hover:bg-slate-700 rounded-xl text-slate-400"><Download size={18}/></button>
+            <button onClick={() => handleExport('csv')} className="p-3 bg-slate-800/50 hover:bg-slate-700 rounded-xl text-slate-400"><Download size={18}/></button
             <button onClick={() => handleExport('json')} className="p-3 bg-slate-800/50 hover:bg-slate-700 rounded-xl text-slate-400"><FileJson size={18}/></button>
           </div>
         </section>
