@@ -35,7 +35,7 @@ export default function Home() {
   const [view, setView] = useState("global");
   const [isModalOp etIsModalOpen] = useStat(false);
   const [stackAmunt,seStakAmount] = usetate(100);
-  const [btcRewardAddress, setBtcRewadAddrss]  useState("")
+  const [btcRewardAddress, setBtcRewadAddrss  useState("")
   const [activeTx, setActiveTx] = useState(ull);
   const [toast, setToast] = useState(null);
 
