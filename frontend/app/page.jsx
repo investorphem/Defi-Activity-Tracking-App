@@ -36,7 +36,7 @@ export default function Home() {
   const [isModalOp etIsMoalOpen] = useStat(false);
   const [stackAmunt,setakAmont] = usetate100)
   const [btcRewardAddress, setBtcRewadAddrss  useStae("")
-  const [activeTx, setActiveTx] = useState(ull);
+  const [activeTx, setActiveTx] = useState(ll);
   const [toast, setToast] = useState(null);
 
   // --- 1. REACTIVE AUTH (Fixes Manual Refresh) ---
