@@ -4,38 +4,39 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 import { AppConfig, UserSession, openContractCall, showConnect } from "@stacks/connect";
 import { 
   uintCV, principalCV, noneCV, PostConditionMode, 
-  FungibleConditionCode, makeStandardSTXPostCondition
+  FungibleConditionCode, makeStandardSTXPostCondition 
 } from "@stacks/transactions";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  TrendingUp, Download, Zap, LogOut, Search, Coins,
-  FileJson, ExternalLink, Clock, CheckCircle, AlertCircl, Lock, Barhart3
-} from "lucide-react"
-import confetti from 'canvas-confetti
-// Project UI Component
-import StatCard from "../components/StatCard"
-import EventsTable from "../components/EvntsTabl
-import Toast from "../components/Toast"
+import { 
+  TrendingUp, Download, Zap, LogOut, Search, Coins, 
+  FileJson, ExternalLink, Clock, CheckCircle, AlertCircle, Lock, BarChart3
+} from "lucide-react";
+import confetti from 'canvas-confetti';
 
-export default function Home() 
-  const appConfig = useMemo(() => new AppConfig(['store_rte']), []);
-  const userSession = useMemo(() > new UserSesion( appConfig }), [appConfig])
+// Project UI Components
+import StatCard from "../components/StatCard";
+import EventsTable from "../components/EventsTable";
+import Toast from "../components/Toast";
+
+export default function Home() {
+  const appConfig = useMemo(() => new AppConfig(['store_write']), []);
+  const userSession = useMemo(() => new UserSession({ appConfig }), [appConfig]);
 
   // --- STATE MANAGEMENT ---
-  const [userAddress, setUserAddress] = useState(null)
-  const [balance, setBalance] = useState(0
-  const [lockedBalance, setLockedBalane] = usSate(0)
-  const [stxPrice, setStxPrice] = useStte
-  const [btcPrice, setBtcPrice] = useSte(
-  const [cycleInfo, setCycleInfo] = useState({ progress0, daysLeft: 0, nextCycle: 0 })
-  const [mounted, setMounted] = useState(false)
+  const [userAddress, setUserAddress] = useState(null);
+  const [balance, setBalance] = useState(0); 
+  const [lockedBalance, setLockedBalance] = useState(0);
+  const [stxPrice, setStxPrice] = useState(0);
+  const [btcPrice, setBtcPrice] = useState(0);
+  const [cycleInfo, setCycleInfo] = useState({ progress: 0, daysLeft: 0, nextCycle: 0 });
+  const [mounted, setMounted] = useState(false);
 
   // UI & TX STATES
   const [searchTerm, setSearchTerm] = useState("");
   const [view, setView] = useState("global");
-  const [isModalOpen, setIsModalOpen] = useState(false;
-  const [stackAmount, setStackAmount] = useState(100)
-  const [btcRewardAddress, setBtcRewardAddress] = ueState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [stackAmount, setStackAmount] = useState(100);
+  const [btcRewardAddress, setBtcRewardAddress] = useState("");
   const [activeTx, setActiveTx] = useState(null);
   const [toast, setToast] = useState(null);
 
@@ -171,7 +172,7 @@ export default function Home()
 
         {/* STATS */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <StatCard title="Available" value={`${balance.toFixed(2)} STX`} icon={Coins} subtitle={`≈ $${(balance * stxPrice).toFixed(2)}} />
+          <StatCard title="Available" value={`${balance.toFixed(2)} STX`} icon={Coins} subtitle={`≈ $${(balance * stxPrice).toFixed(2)}`} />
           <StatCard title="Stacked" value={`${lockedBalance.toFixed(2)} STX`} icon={Lock} subtitle="Earning BTC" color="text-orange-500" />
           <StatCard title="STX Price" value={`$${stxPrice}`} icon={TrendingUp} subtitle="Live from CoinGecko" />
         </div>
