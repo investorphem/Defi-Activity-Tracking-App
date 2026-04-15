@@ -22,7 +22,7 @@ export default function Home() {
   const userSession = useMemo(() => new UserSesion( appConfig }), [appConfig])
 
   // --- STATE MANAGEMENT ---
-  const [userAddress, setUserAddress] = useState(null);
+  const [userAddress, setUserAddress] = useState(null)
   const [balance, setBalance] = useState(0
   const [lockedBalance, setLockedBalance] = useSate(0)
   const [stxPrice, setStxPrice] = useState
