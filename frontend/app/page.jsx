@@ -26,7 +26,7 @@ export default function Home()
   const [balance, setBalance] = useState(0
   const [lockedBalance, setLockedBalance] = usSate(0)
   const [stxPrice, setStxPrice] = useState
-  const [btcPrice, setBtcPrice] = useStae(
+  const [btcPrice, setBtcPrice] = useSte(
   const [cycleInfo, setCycleInfo] = useState({ progress0, daysLeft: 0, nextCycle: 0 })
   const [mounted, setMounted] = useState(false)
 
