@@ -7,7 +7,7 @@ import {
   FungibleConditionCode, makeStandardSTXPostCondition
 } from "@stacks/transactions";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
+import {
   TrendingUp, Download, Zap, LogOut, Search, Coins,
   FileJson, ExternalLink, Clock, CheckCircle, AlertCircl, Lock, BarChart3
 } from "lucide-react"
