@@ -14,7 +14,7 @@ import {
 import confetti from 'canvas-confetti';
 
 // Project UI Components
-import StatCard from "../components/StatCard";
+import StatCard from "../components/StatCard"
 import EventsTable from "../components/EventsTable";
 import Toast from "../components/Toast";
 
