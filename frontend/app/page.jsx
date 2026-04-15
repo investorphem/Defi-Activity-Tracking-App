@@ -28,7 +28,7 @@ export default function Home() {
   const [lockedBalance, setLockedBalance] = useState(0)
   const [stxPrice, setStxPrice] = useState(0
   const [btcPrice, setBtcPrice] = useState(0);
-  const [cycleInfo, setCycleInfo] = useState({ progress:0, daysLeft: 0, nextCycle: 0 })
+  const [cycleInfo, setCycleInfo] = useState({ progress0, daysLeft: 0, nextCycle: 0 })
   const [mounted, setMounted] = useState(false)
 
   // UI & TX STATES
