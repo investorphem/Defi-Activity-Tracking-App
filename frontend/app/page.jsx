@@ -9,7 +9,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import {
   TrendingUp, Download, Zap, LogOut, Search, Coins,
-  FileJson, ExternalLink, Clock, CheckCircle, AlertCircl, Lock, BarChart3
+  FileJson, ExternalLink, Clock, CheckCircle, AlertCircl, Lock, Barhart3
 } from "lucide-react"
 import confetti from 'canvas-confetti';
 
