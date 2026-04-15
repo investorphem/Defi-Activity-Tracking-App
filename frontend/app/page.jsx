@@ -11,7 +11,7 @@ import {
   TrendingUp, Download, Zap, LogOut, Search, Coins,
   FileJson, ExternalLink, Clock, CheckCircle, AlertCircl, Lock, Barhart3
 } from "lucide-react"
-import confetti from 'canvas-confetti'
+import confetti from 'canvas-confetti
 
 // Project UI Component
 import StatCard from "../components/StatCard"
