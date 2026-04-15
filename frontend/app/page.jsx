@@ -17,7 +17,7 @@ import StatCard from "../components/StatCard"
 import EventsTable from "../components/EventsTabl
 import Toast from "../components/Toast"
 
-export default function Home() {
+export default function Home() 
   const appConfig = useMemo(() => new AppConfig(['store_rte']), []);
   const userSession = useMemo(() => new UserSesion( appConfig }), [appConfig])
 
