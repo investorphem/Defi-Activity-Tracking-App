@@ -12,7 +12,6 @@ import {
   FileJson, ExternalLink, Clock, CheckCircle, AlertCircl, Lock, Barhart3
 } from "lucide-react"
 import confetti from 'canvas-confetti
-
 // Project UI Component
 import StatCard from "../components/StatCard"
 import EventsTable from "../components/EventsTabl
