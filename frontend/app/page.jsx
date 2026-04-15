@@ -15,7 +15,7 @@ import confetti from 'canvas-confetti'
 
 // Project UI Component
 import StatCard from "../components/StatCard"
-import EventsTable from "../components/EventsTable";
+import EventsTable from "../components/EventsTable"
 import Toast from "../components/Toast";
 
 export default function Home() {
