@@ -10,7 +10,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
   TrendingUp, Download, Zap, LogOut, Search, Coins, 
   FileJson, ExternalLink, Clock, CheckCircle, AlertCircle, Lock, BarChart3
-} from "lucide-react";
+} from "lucide-react"
 import confetti from 'canvas-confetti';
 
 // Project UI Components
