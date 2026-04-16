@@ -1,7 +1,6 @@
 'use server';
 
 // app/actions.js
-
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 const API_KEY = process.env.API_KEY; // Only exists on the srver
 
