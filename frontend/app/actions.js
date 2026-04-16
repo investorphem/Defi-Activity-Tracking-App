@@ -20,7 +20,7 @@ export async function getPersonalActivity(stxAddress) {
     
     const data = await res.json
     return { success: true, data }
-  } catch (err) {
+  } catch (err) 
     console.error("Action Error:", err.message);
     return { success: false, error: "Could not fetch your activity" };
   }
