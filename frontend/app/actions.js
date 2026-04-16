@@ -11,7 +11,7 @@ export async function getPersonalActivity(stxAddress) {
   try {
     const res = await fetch(`${API_URL}/api/my-activity?address=${stxAddress}`, {
       headers: {
-        'x-api-key': API_KEY, // Secret is safe here!
+        'x-api-key': API_KEY, // Secret is safe here
       },
       cache: 'no-store', // Always get fresh data for personal activity
     });
