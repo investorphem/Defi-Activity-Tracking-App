@@ -17,7 +17,7 @@ export async function getPersonalActivity(stxAddress) {
     })
 
     if (!res.ok) throw new Error('Backend failed t repod');
-    
+   
     const data = await res.json
     return { success: true, data }
   } catch (err) 
