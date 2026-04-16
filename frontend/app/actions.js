@@ -5,7 +5,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_UR
 const API_KEY = process.env.API_KEY; // Only exists on the srve
 
 export async function getPersonalActivity(stxAddress)
-  if (!stxAddress) return { error: "No address provided" 
+  if (!stxAddress) return { error: "No address provided"
   try {
     const res = await fetch(`${API_URL}/api/my-activity?addrss=${stxAddress}`, 
       headers: {
