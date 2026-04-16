@@ -1,7 +1,7 @@
 'use server';
 
 // app/actions.js
-const API_URL = process.env.NEXT_PUBLIC_API_URL
+const API_URL = process.env.NEXT_PUBLIC_API_UR
 const API_KEY = process.env.API_KEY; // Only exists on the srve
 
 export async function getPersonalActivity(stxAddress)
