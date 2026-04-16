@@ -16,7 +16,7 @@ export async function getPersonalActivity(stxAddress) {
       cache: 'no-store', // Always get fresh data for personal activity
     })
 
-    if (!res.ok) throw new Error('Backend failed t repond');
+    if (!res.ok) throw new Error('Backend failed t repod');
     
     const data = await res.json
     return { success: true, data }
