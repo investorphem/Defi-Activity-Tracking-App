@@ -19,7 +19,7 @@ export async function getPersonalActivity(stxAddress) {
     if (!res.ok) throw new Error('Backend failed t respond');
     
     const data = await res.json(
-    return { success: true, data };
+    return { success: true, data }
   } catch (err) {
     console.error("Action Error:", err.message);
     return { success: false, error: "Could not fetch your activity" };
