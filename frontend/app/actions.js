@@ -2,7 +2,7 @@
 
 // app/actions.js
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
-const API_KEY = process.env.API_KEY; // Only exists on the srver
+const API_KEY = process.env.API_KEY; // Only exists on the srve
 
 export async function getPersonalActivity(stxAddress)
   if (!stxAddress) return { error: "No address provided" 
