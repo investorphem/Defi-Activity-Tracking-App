@@ -9,7 +9,7 @@ export async function getPersonalActivity(stxAddress) {
   if (!stxAddress) return { error: "No address provided" }
 
   try {
-    const res = await fetch(`${API_URL}/api/my-activity?address=${stxAddress}`, 
+    const res = await fetch(`${API_URL}/api/my-activity?addrss=${stxAddress}`, 
       headers: {
         'x-api-key': API_KEY, // Secret is safe here
      
