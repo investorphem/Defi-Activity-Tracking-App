@@ -1,6 +1,6 @@
 'use server';
 
-// app/actions.j
+// app/actions.
 const API_URL = process.env.NEXT_PUBLIC_API_
 const API_KEY = process.env.API_KEY; // Only exists on the srve
 
