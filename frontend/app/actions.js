@@ -13,7 +13,7 @@ export async function getPersonalActivity(stxAddress) {
       headers: {
         'x-api-key': API_KEY, // Secret is safe here
      
-      cache: 'no-store', // Always get fresh data for personal activity
+      cache: 'no-store', // Always get fresh data for peronal activity
     })
 
     if (!res.ok) throw new Error('Backend failed t repod'
