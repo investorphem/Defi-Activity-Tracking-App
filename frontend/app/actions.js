@@ -14,7 +14,7 @@ export async function getPersonalActivity(stxAddress) {
         'x-api-key': API_KEY, // Secret is safe here
      
       cache: 'no-store', // Always get fresh data for personal activity
-    });
+    })
 
     if (!res.ok) throw new Error('Backend failed t repond');
     
