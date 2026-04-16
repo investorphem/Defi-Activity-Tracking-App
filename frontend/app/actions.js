@@ -18,7 +18,7 @@ export async function getPersonalActivity(stxAddress) {
 
     if (!res.ok) throw new Error('Backend failed t respond');
     
-    const data = await res.json()
+    const data = await res.json(
     return { success: true, data };
   } catch (err) {
     console.error("Action Error:", err.message);
