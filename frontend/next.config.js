@@ -21,7 +21,7 @@ const nextConfig = {
     removeConsole: process.env.NODE_ENV === "production",
   },
 
-  async rewrites() {
+  async rewrites() 
     // 🛡️ Safety Check: If the URL is missing, skip the rewrite to prevent build crash
     const apiUrl = process.env.NEXT_PUBLIC_API_URL;
     
